@@ -59,11 +59,11 @@ Use the claim “The Great Wall of China is visible from the Moon with the naked
 Land on Block 01. Hold on the Truth Score, verdict seal, confidence bar, and four score signals.
 
 **Chinese narration / 中文旁白**  
-结果是 9 分，事实不符。但这个数字不是模型随口生成的。它由可测试代码，根据模型共识和来源加权证据确定计算。
+结果是事实不符，并给出一项可复算的真实度评分。这个数字不是模型随口生成的，而是由可测试代码根据模型共识和来源加权证据确定计算。
 
 **English subtitle cues / 英文字幕**
 
-- `00:41.000 → 00:48.500` The verdict is Refuted, with a Truth Score of 9.
+- `00:41.000 → 00:48.500` The verdict is Refuted, with a deterministic Truth Score.
 - `00:48.500 → 00:58.000` The score is deterministic: model consensus plus source-weighted evidence.
 
 ### 05 · 00:58–01:16 · Inspect the evidence ledger / 检查证据账本

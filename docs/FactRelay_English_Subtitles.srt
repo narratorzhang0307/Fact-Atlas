@@ -24,7 +24,7 @@ FactRelay collects evidence before calling two Gonka models in sequence.
 
 7
 00:00:41,000 --> 00:00:48,500
-The verdict is Refuted, with a Truth Score of 9.
+The verdict is Refuted, with a deterministic Truth Score.
 
 8
 00:00:48,500 --> 00:00:58,000
