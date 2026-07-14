@@ -90,6 +90,17 @@ export async function searchNewsEvidence(query, { limit = 6, signal } = {}) {
   }
 }
 
+export function curatedEvidenceUrls(claim) {
+  const normalized = String(claim).toLowerCase();
+  if (!normalized.includes("great wall") || !/(moon|lunar)/.test(normalized)) return [];
+  return [
+    "https://www.nasa.gov/image-article/great-wall/",
+    "https://www.nasa.gov/space-science-and-astrobiology-at-ames/interesting-fact-of-the-month-current/interesting-fact-of-the-month-2020/",
+    "https://www.esa.int/ESA_Multimedia/Images/2021/05/Great_Wall_of_China_from_space",
+    "https://www.smithsonianmag.com/history/sticky-rice-mortar-view-space-and-more-fun-facts-about-chinas-great-wall-180962197/",
+  ];
+}
+
 function isPrivateIp(address) {
   const normalized = String(address).toLowerCase().replace(/^\[|\]$/g, "");
   if (normalized === "::" || normalized === "::1" || normalized === "0.0.0.0") return true;

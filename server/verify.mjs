@@ -1,4 +1,9 @@
-import { dedupeSources, fetchUrlEvidence, searchNewsEvidence } from "./evidence.mjs";
+import {
+  curatedEvidenceUrls,
+  dedupeSources,
+  fetchUrlEvidence,
+  searchNewsEvidence,
+} from "./evidence.mjs";
 import {
   callGonka,
   DEFAULT_GONKA_BASE_URL,
@@ -129,7 +134,21 @@ export async function verifyClaim(
     } catch {
       retrievalStatus = "partial";
     }
-    const sources = dedupeSources([...(submittedSource ? [submittedSource] : []), ...newsSources]);
+    const curatedSettled = await Promise.allSettled(
+      curatedEvidenceUrls(claim).map((url) => fetchUrlEvidence(url, {
+        signal: controller.signal,
+        resolveHost: runtime.resolveHost,
+      })),
+    );
+    const curatedSources = curatedSettled.flatMap((result, index) => result.status === "fulfilled"
+      ? [{ ...result.value, id: `curated-${index + 1}`, origin: "Curated authoritative seed" }]
+      : []);
+    if (curatedSettled.some((result) => result.status === "rejected")) retrievalStatus = "partial";
+    const sources = dedupeSources([
+      ...(submittedSource ? [submittedSource] : []),
+      ...curatedSources,
+      ...newsSources,
+    ]);
     const retrievalProviders = [...new Set(sources.map((source) => source.origin).filter(Boolean))];
     trace.push({
       stage: "evidence-retrieval",

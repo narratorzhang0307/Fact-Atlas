@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   assertPublicUrl,
+  curatedEvidenceUrls,
   dedupeSources,
   fetchUrlEvidence,
   parseBingNewsRss,
@@ -28,6 +29,11 @@ describe("evidence parsing", () => {
   it("deduplicates repeated publisher/title pairs", () => {
     const source = { title: "Same", publisher: "Publisher", url: "https://example.com/a" };
     expect(dedupeSources([source, { ...source, url: "https://example.com/b" }])).toHaveLength(1);
+  });
+
+  it("uses authoritative live seeds only for the reproducible Great Wall starter", () => {
+    expect(curatedEvidenceUrls("The Great Wall is visible from the Moon.")).toHaveLength(4);
+    expect(curatedEvidenceUrls("Octopuses have three hearts.")).toEqual([]);
   });
 
   it("rejects literal and DNS-resolved private network URLs", async () => {
