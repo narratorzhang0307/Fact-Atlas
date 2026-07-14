@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+tmp/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.local
+
+# Research references stay local and are not redistributed.
+区块链书籍/
+*.pdf
+*.mp4
+*.mp3
+

@@ -1,0 +1,32 @@
+{
+  "name": "factrelay",
+  "private": false,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Traceable multi-model fact checking powered by GonkaRouter.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "vite build",
+    "start": "NODE_ENV=production node server.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^4.1.10"
+  }
+}
