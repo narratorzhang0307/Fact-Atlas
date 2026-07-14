@@ -3,6 +3,8 @@
 > AI³ Growth Hackathon 2026 · Track 3: Gonka — AI for Society  
 > Official brief / 比赛说明：<https://hackathonweekly.feishu.cn/wiki/M0pewmd0ti3z8IkVmVYcEzTWnIe>
 
+Official submission form / 官方提交表：<https://hackathonweekly.feishu.cn/share/base/form/shrcnaF4yF8HmLhA42AH7DWlrPc>
+
 This file contains public copy that can be pasted into the submission form. Private team information is deliberately excluded from Git.
 
 本文件包含可直接粘贴到提交表单的公开文案。姓名、手机、邮箱与授权确认等私人信息不写入公开 GitHub 仓库。
@@ -21,6 +23,10 @@ This file contains public copy that can be pasted into the submission form. Priv
 | Phone / 手机 | **PRIVATE — user supplies in the form / 由参赛者填写** |
 | Email / 邮箱 | **PRIVATE — user supplies in the form / 由参赛者填写** |
 | Authorization consent / 授权确认 | **USER ACTION REQUIRED / 需参赛者本人确认** |
+
+The official form has exactly ten required fields: project name, team member names, phone, email, track, public GitHub link, running demo, project/technical description, public/downloadable demo video, and authorization consent.
+
+官方表单共有 10 个必填项：项目名、队伍成员姓名、手机号、邮箱、赛道、公开 GitHub、作品体验网址、作品介绍/技术说明、公开或可下载的视频链接、授权确认。
 
 ## One-line pitch / 一句话介绍
 
