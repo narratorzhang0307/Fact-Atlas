@@ -1,5 +1,7 @@
 import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
+import { lookup } from "node:dns/promises";
 import { createServer } from "node:http";
+import { isIP } from "node:net";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEMO_RESULT } from "./server/demo.mjs";
@@ -14,6 +16,12 @@ import { verifyClaim } from "./server/verify.mjs";
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST = resolve(ROOT, "dist");
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+async function resolveHost(hostname) {
+  const cleanHostname = hostname.replace(/^\[|\]$/g, "");
+  if (isIP(cleanHostname)) return [cleanHostname];
+  return (await lookup(cleanHostname, { all: true, verbatim: true })).map((entry) => entry.address);
+}
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
@@ -108,7 +116,7 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {
       const body = await readJson(request);
-      sendJson(response, 200, await verifyClaim(body, process.env));
+      sendJson(response, 200, await verifyClaim(body, process.env, { resolveHost }));
       return;
     }
     if (url.pathname.startsWith("/api/")) {

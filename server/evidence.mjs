@@ -1,6 +1,3 @@
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
-
 const USER_AGENT = "FactRelay/0.1 (+https://github.com/narratorzhang0307/FactRelay)";
 
 export function decodeEntities(value) {
@@ -55,11 +52,17 @@ export async function searchNewsEvidence(query, { limit = 6, signal } = {}) {
 }
 
 function isPrivateIp(address) {
-  if (address === "::1" || address === "0.0.0.0") return true;
-  const normalized = address.toLowerCase();
-  if (normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe80:")) return true;
-  if (!isIP(address) || address.includes(":")) return false;
-  const [a, b] = address.split(".").map(Number);
+  const normalized = String(address).toLowerCase().replace(/^\[|\]$/g, "");
+  if (normalized === "::" || normalized === "::1" || normalized === "0.0.0.0") return true;
+  if (/^(fc|fd)/.test(normalized) || /^fe[89ab]/.test(normalized)) return true;
+  if (normalized.includes(":")) {
+    const mappedIpv4 = normalized.match(/(?:^|:)ffff:(\d+\.\d+\.\d+\.\d+)$/)?.[1];
+    return mappedIpv4 ? isPrivateIp(mappedIpv4) : false;
+  }
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(normalized)) return false;
+  const parts = normalized.split(".").map(Number);
+  if (parts.some((part) => part < 0 || part > 255)) return true;
+  const [a, b] = parts;
   return (
     a === 10 ||
     a === 127 ||
@@ -70,7 +73,7 @@ function isPrivateIp(address) {
   );
 }
 
-async function assertPublicUrl(rawUrl) {
+export async function assertPublicUrl(rawUrl, resolveHost) {
   let url;
   try {
     url = new URL(rawUrl);
@@ -79,9 +82,13 @@ async function assertPublicUrl(rawUrl) {
   }
   if (!new Set(["http:", "https:"]).has(url.protocol)) throw new Error("Only HTTP and HTTPS URLs are supported.");
   if (url.username || url.password) throw new Error("URLs containing credentials are not supported.");
-  if (url.hostname === "localhost" || url.hostname.endsWith(".local")) throw new Error("Local URLs are not supported.");
-  const addresses = await lookup(url.hostname, { all: true, verbatim: true });
-  if (!addresses.length || addresses.some((entry) => isPrivateIp(entry.address))) {
+  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local")) {
+    throw new Error("Local URLs are not supported.");
+  }
+  if (isPrivateIp(hostname)) throw new Error("Private network URLs are not supported.");
+  const addresses = resolveHost ? await resolveHost(hostname) : [];
+  if (resolveHost && (!addresses.length || addresses.some(isPrivateIp))) {
     throw new Error("Private network URLs are not supported.");
   }
   return url;
@@ -110,8 +117,8 @@ function htmlToText(html) {
   ).replace(/\s+/g, " ").trim();
 }
 
-export async function fetchUrlEvidence(rawUrl, { signal } = {}) {
-  let current = await assertPublicUrl(rawUrl);
+export async function fetchUrlEvidence(rawUrl, { signal, resolveHost } = {}) {
+  let current = await assertPublicUrl(rawUrl, resolveHost);
   let response;
 
   for (let redirects = 0; redirects <= 3; redirects += 1) {
@@ -123,7 +130,7 @@ export async function fetchUrlEvidence(rawUrl, { signal } = {}) {
     if (![301, 302, 303, 307, 308].includes(response.status)) break;
     const location = response.headers.get("location");
     if (!location) throw new Error("The submitted page redirected without a destination.");
-    current = await assertPublicUrl(new URL(location, current).toString());
+    current = await assertPublicUrl(new URL(location, current).toString(), resolveHost);
   }
 
   if (!response?.ok) throw new Error(`The submitted page returned ${response?.status ?? "an error"}.`);

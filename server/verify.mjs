@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { dedupeSources, fetchUrlEvidence, searchNewsEvidence } from "./evidence.mjs";
 import {
   callGonka,
@@ -73,7 +72,11 @@ function uniqueStrings(values) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].slice(0, 8);
 }
 
-export async function verifyClaim(rawInput, env = process.env) {
+export async function verifyClaim(
+  rawInput,
+  env = typeof process === "undefined" ? {} : process.env,
+  runtime = {},
+) {
   const input = validateInput(rawInput);
   const config = configFromEnv(env);
   if (!config.apiKey) {
@@ -91,7 +94,10 @@ export async function verifyClaim(rawInput, env = process.env) {
 
   try {
     if (input.kind === "url") {
-      submittedSource = await fetchUrlEvidence(input.content, { signal: controller.signal });
+      submittedSource = await fetchUrlEvidence(input.content, {
+        signal: controller.signal,
+        resolveHost: runtime.resolveHost,
+      });
       const extraction = await callGonka({
         ...config,
         model: config.kimiModel,
@@ -162,7 +168,7 @@ export async function verifyClaim(rawInput, env = process.env) {
     }));
 
     return {
-      id: `fr_${randomUUID()}`,
+      id: `fr_${crypto.randomUUID()}`,
       createdAt: new Date().toISOString(),
       mode: "live",
       claim,
