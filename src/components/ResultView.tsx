@@ -68,11 +68,11 @@ function formatModel(model: string) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "Date not supplied";
+  if (!value) return "Date not supplied · 未提供日期";
   const date = new Date(value);
   return Number.isNaN(date.valueOf())
     ? value
-    : new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" }).format(date);
+    : `${new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" }).format(date)} · ${new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" }).format(date)}`;
 }
 
 function stanceIcon(stance: SourceStance) {
@@ -96,7 +96,7 @@ function SourceCard({ source, index }: { source: EvidenceSource; index: number }
         <p>{source.snippet}</p>
         <div className="source-assessment">
           <span className={`stance ${source.stance}`}>{stanceIcon(source.stance)} {STANCE_LABEL[source.stance]} · {STANCE_ZH[source.stance]}</span>
-          <span>{source.reliability}% source confidence</span>
+          <span>{source.reliability}% source confidence · 来源可信度</span>
           <span className="assessment-reason">{source.reason}</span>
         </div>
       </div>
@@ -118,7 +118,7 @@ function TraceRow({ step, preview }: { step: TraceStep; preview: boolean }) {
         {step.requestId ? (
           <code title={step.requestId}>{step.requestId}</code>
         ) : (
-          <span>{preview && isModel ? "No ID in preview" : "Non-AI step"}</span>
+          <span>{preview && isModel ? "No ID in preview · 预览无回执" : "Non-AI step · 非 AI 步骤"}</span>
         )}
         <small>{step.durationMs === null ? "—" : `${(step.durationMs / 1000).toFixed(1)}s`}</small>
       </div>
@@ -149,7 +149,7 @@ export function ResultView({ result }: { result: VerificationResult }) {
 
       <section className={`verdict-card card verdict-${result.verdict}`}>
         <div className="verdict-topline">
-          <span className="section-kicker"><ShieldCheck size={14} /> Verification result</span>
+          <span className="section-kicker"><ShieldCheck size={14} /> Verification result · 核查结果</span>
           <button type="button" className="copy-button" onClick={copyReport}>
             {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied · 已复制" : "Copy · 复制报告"}
           </button>
@@ -180,10 +180,10 @@ export function ResultView({ result }: { result: VerificationResult }) {
         </div>
         <div className="score-breakdown">
           {[
-            ["Model consensus", result.scoring.modelConsensus],
-            ["Evidence balance", result.scoring.evidenceBalance],
-            ["Source coverage", result.scoring.sourceCoverage],
-            ["Model agreement", result.scoring.modelAgreement],
+            ["Model consensus · 模型共识", result.scoring.modelConsensus],
+            ["Evidence balance · 证据平衡", result.scoring.evidenceBalance],
+            ["Source coverage · 来源覆盖", result.scoring.sourceCoverage],
+            ["Model agreement · 模型一致", result.scoring.modelAgreement],
           ].map(([label, value]) => (
             <div key={label}>
               <span>{label}</span>
@@ -203,12 +203,12 @@ export function ResultView({ result }: { result: VerificationResult }) {
             </div>
             <h2>{result.sources.length} retrievable sources <span className="heading-zh">可追溯来源</span></h2>
           </div>
-          <span className="section-note">Source numbers are the only citations models may use.</span>
+          <span className="section-note">Source numbers are the only citations models may use. · 模型只能引用账本中的来源编号。</span>
         </div>
         <div className="source-list">
           {result.sources.length ? result.sources.map((source, index) => (
             <SourceCard key={source.id} source={source} index={index} />
-          )) : <p className="empty-state">No live sources were retrieved. The score is intentionally pulled toward uncertainty.</p>}
+          )) : <p className="empty-state">No live sources were retrieved. The score is intentionally pulled toward uncertainty. · 未检索到实时来源，系统会主动将评分拉回不确定区间。</p>}
         </div>
       </section>
 
@@ -221,7 +221,7 @@ export function ResultView({ result }: { result: VerificationResult }) {
             </div>
             <h2>Two models, distinct responsibilities <span className="heading-zh">双模型分工</span></h2>
           </div>
-          <span className="section-note">Agreement is measured; disagreement is preserved.</span>
+          <span className="section-note">Agreement is measured; disagreement is preserved. · 衡量共识，同时保留分歧。</span>
         </div>
         <div className="model-grid">
           {result.models.map((model) => (
@@ -238,12 +238,12 @@ export function ResultView({ result }: { result: VerificationResult }) {
                 {model.reasoning.map((reason) => <li key={reason}>{reason}</li>)}
               </ol>
               <div className="model-proof">
-                <div><Fingerprint size={15} /><span>Gonka Request ID</span></div>
-                <code>{model.requestId ?? "Not available in preview"}</code>
+                <div><Fingerprint size={15} /><span>Gonka Request ID · Gonka 请求回执</span></div>
+                <code>{model.requestId ?? "Not available in preview · 预览中不可用"}</code>
               </div>
               <div className="model-foot">
-                <span>{model.confidence}% confidence</span>
-                <span><Clock3 size={13} /> {model.durationMs === null ? "Preview" : `${(model.durationMs / 1000).toFixed(1)}s`}</span>
+                <span>{model.confidence}% confidence · 信心</span>
+                <span><Clock3 size={13} /> {model.durationMs === null ? "Preview · 预览" : `${(model.durationMs / 1000).toFixed(1)}s`}</span>
               </div>
             </article>
           ))}
@@ -259,7 +259,7 @@ export function ResultView({ result }: { result: VerificationResult }) {
             </div>
             <h2>Replayable execution path <span className="heading-zh">可重放执行路径</span></h2>
           </div>
-          <span className="section-note">Only upstream IDs are labeled as Gonka requests.</span>
+          <span className="section-note">Only upstream IDs are labeled as Gonka requests. · 仅上游真实回执会标记为 Gonka 请求。</span>
         </div>
         <ol className="trace-list">
           {result.trace.map((step, index) => <TraceRow key={`${step.stage}-${index}`} step={step} preview={preview} />)}

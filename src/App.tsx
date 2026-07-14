@@ -8,7 +8,7 @@ async function getJson<T>(response: Response): Promise<T> {
   const body = await response.json();
   if (!response.ok) {
     const apiError = body as ApiError;
-    const error = new Error(apiError.error?.message || `Request failed with ${response.status}.`);
+    const error = new Error(apiError.error?.message || `Request failed with ${response.status}. · 请求失败（${response.status}）`);
     error.name = apiError.error?.code || "REQUEST_FAILED";
     if (apiError.error?.details) error.message += ` ${apiError.error.details}`;
     throw error;
@@ -31,7 +31,7 @@ export default function App() {
       setError("");
       setResult(await getJson<VerificationResult>(await fetch("/api/demo")));
     } catch (previewError) {
-      setError(previewError instanceof Error ? previewError.message : "Could not load the preview.");
+      setError(previewError instanceof Error ? previewError.message : "Could not load the preview. · 无法加载预览。");
     }
   };
 
@@ -40,7 +40,7 @@ export default function App() {
       fetch("/api/health").then(getJson<HealthStatus>).then(setHealth),
       fetch("/api/demo").then(getJson<VerificationResult>).then(setResult),
     ]).catch((startupError) => {
-      setError(startupError instanceof Error ? startupError.message : "FactRelay could not start.");
+      setError(startupError instanceof Error ? startupError.message : "FactRelay could not start. · FactRelay 无法启动。");
     });
   }, []);
 
@@ -56,7 +56,7 @@ export default function App() {
       setResult(await getJson<VerificationResult>(response));
       window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
     } catch (verificationError) {
-      setError(verificationError instanceof Error ? verificationError.message : "Verification failed.");
+      setError(verificationError instanceof Error ? verificationError.message : "Verification failed. · 核查失败。");
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function App() {
             {health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}
           </div>
           <div className="header-meta">
-            <span><ShieldCheck size={15} /> Auditable by design</span>
+            <span><ShieldCheck size={15} /> Auditable by design · 可审计设计</span>
             <a href="https://github.com/narratorzhang0307/FactRelay" target="_blank" rel="noreferrer">
               <Github size={16} /> <span>GitHub</span>
             </a>
@@ -92,28 +92,29 @@ export default function App() {
                 One public claim enters. Independent evidence, two adversarial models, and a replayable
                 inference trail come back.
               </p>
+              <p className="hero-description-zh">输入一条公开主张，获得独立证据、双模型对抗审查与可重放的推理轨迹。</p>
               <div className="hero-tags" aria-label="Product capabilities">
-                <span># live evidence</span>
-                <span># two-model review</span>
-                <span># request IDs</span>
+                <span># live evidence · 实时证据</span>
+                <span># two-model review · 双模型审查</span>
+                <span># request IDs · 推理回执</span>
               </div>
             </div>
 
             <div className="relay-console" aria-label="FactRelay verification route">
               <div className="relay-console-head">
-                <span>Relay status</span>
-                <strong>{health?.liveReady ? "LIVE" : "PREVIEW"}</strong>
+                <span>Relay status · 系统状态</span>
+                <strong>{health?.liveReady ? "LIVE · 实时" : "PREVIEW · 预览"}</strong>
               </div>
               <div className="relay-console-stat">
                 <strong>02</strong>
-                <span>models challenge<br />every verdict</span>
+                <span>models challenge<br />every verdict<br /><small>模型质疑每一个结论</small></span>
               </div>
               <div className="relay-route">
-                <div><span>01</span><strong>Sources</strong></div>
+                <div><span>01</span><strong>Sources · 来源</strong></div>
                 <ArrowRight size={16} />
-                <div><span>02</span><strong>Challenge</strong></div>
+                <div><span>02</span><strong>Challenge · 质疑</strong></div>
                 <ArrowRight size={16} />
-                <div><span>03</span><strong>Proof</strong></div>
+                <div><span>03</span><strong>Proof · 回执</strong></div>
               </div>
             </div>
           </section>
@@ -146,18 +147,18 @@ export default function App() {
             <div className="result-column">
               {error && (
                 <div className="error-banner" role="alert">
-                  <strong>Verification paused</strong>
+                  <strong>Verification paused · 核查已暂停</strong>
                   <span>{error}</span>
-                  {!health?.liveReady && <small>Add `GONKA_API_KEY` to `.env.local`, then restart the server.</small>}
+                  {!health?.liveReady && <small>Add `GONKA_API_KEY` to `.env.local`, then restart the server. · 添加密钥后重启服务。</small>}
                 </div>
               )}
               {loading && (
                 <div className="loading-card card" aria-live="polite">
                   <div className="loading-orbit"><span /><i /></div>
                   <div>
-                    <span className="section-kicker">Live run in progress</span>
-                    <h2>Two models are testing the evidence.</h2>
-                    <p>FactRelay is retrieving sources, running the investigator, then asking the skeptic to challenge it.</p>
+                    <span className="section-kicker">Live run in progress · 实时核查中</span>
+                    <h2>Two models are testing the evidence. <span className="heading-zh">双模型正在审查证据。</span></h2>
+                    <p>FactRelay is retrieving sources, running the investigator, then asking the skeptic to challenge it. · FactRelay 正在检索来源，先运行调查方，再由质疑方交叉检查。</p>
                   </div>
                 </div>
               )}
@@ -167,8 +168,8 @@ export default function App() {
         </main>
 
         <footer>
-          <span>FactRelay · AI³ Growth Hackathon 2026</span>
-          <span>AI inference exclusively through GonkaRouter</span>
+          <span>FactRelay · AI³ Growth Hackathon 2026 · AI³ Growth 黑客松</span>
+          <span>AI inference exclusively through GonkaRouter · AI 推理仅通过 GonkaRouter</span>
         </footer>
       </div>
     </div>

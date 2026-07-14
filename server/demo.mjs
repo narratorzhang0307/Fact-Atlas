@@ -8,13 +8,13 @@ export const DEMO_RESULT = {
   truthScore: 9,
   confidence: 93,
   summary:
-    "The claim is refuted. Astronaut observations and space-imaging references agree that the Great Wall is generally not visible from the Moon unaided and is difficult to distinguish even from low Earth orbit.",
+    "The claim is refuted. Astronaut observations and space-imaging references agree that the Great Wall is generally not visible from the Moon unaided and is difficult to distinguish even from low Earth orbit. · 该主张不成立。宇航员观察与太空影像资料一致表明，人类通常无法从月球上肉眼看到长城，即使在近地轨道也很难辨认。",
   scoring: {
     modelConsensus: 4,
     evidenceBalance: 8,
     sourceCoverage: 100,
     modelAgreement: 98,
-    formula: "55% model consensus + 45% source-weighted evidence; weak evidence is pulled toward 50.",
+    formula: "55% model consensus + 45% source-weighted evidence; weak evidence is pulled toward 50. · 55% 模型共识 + 45% 来源加权证据；弱证据会将评分拉回 50。",
   },
   sources: [
     {
@@ -28,7 +28,7 @@ export const DEMO_RESULT = {
       origin: "Preview fixture",
       stance: "refute",
       reliability: 98,
-      reason: "Direct space-observation authority addressing the exact visibility claim.",
+      reason: "Direct space-observation authority addressing the exact visibility claim. · 权威太空观测机构直接回应了该可见性主张。",
     },
     {
       id: "preview-2",
@@ -41,7 +41,7 @@ export const DEMO_RESULT = {
       origin: "Preview fixture",
       stance: "refute",
       reliability: 91,
-      reason: "Independent reference work that directly evaluates the myth.",
+      reason: "Independent reference work that directly evaluates the myth. · 独立参考资料直接检验了这一传言。",
     },
     {
       id: "preview-3",
@@ -54,7 +54,7 @@ export const DEMO_RESULT = {
       origin: "Preview fixture",
       stance: "refute",
       reliability: 96,
-      reason: "Independent space agency evidence consistent with NASA's account.",
+      reason: "Independent space agency evidence consistent with NASA's account. · 独立航天机构的证据与 NASA 的说明一致。",
     },
   ],
   models: [
@@ -66,11 +66,11 @@ export const DEMO_RESULT = {
       usage: { inputTokens: 0, outputTokens: 0 },
       verdict: "refuted",
       confidence: 96,
-      summary: "Multiple independent space agencies directly contradict the naked-eye visibility claim.",
+      summary: "Multiple independent space agencies directly contradict the naked-eye visibility claim. · 多家相互独立的航天机构均直接否定了肉眼可见这一主张。",
       reasoning: [
-        "The claim specifies observation from the Moon, a much greater distance than low Earth orbit.",
-        "NASA and ESA evidence both describe the wall as difficult to distinguish even from closer orbital distances.",
-        "No direct observational evidence supports the viral claim.",
+        "The claim specifies observation from the Moon, a much greater distance than low Earth orbit. · 该主张指的是从月球观察，其距离远大于近地轨道。",
+        "NASA and ESA evidence both describe the wall as difficult to distinguish even from closer orbital distances. · NASA 与 ESA 的证据都表明，即使从更近的轨道也很难辨认长城。",
+        "No direct observational evidence supports the viral claim. · 没有直接观测证据支持这一热传说法。",
       ],
       missingEvidence: [],
       evidenceAssessments: [],
@@ -83,11 +83,11 @@ export const DEMO_RESULT = {
       usage: { inputTokens: 0, outputTokens: 0 },
       verdict: "refuted",
       confidence: 94,
-      summary: "The myth likely confuses occasional visibility from low orbit using imaging equipment with unaided visibility from the Moon.",
+      summary: "The myth likely confuses occasional visibility from low orbit using imaging equipment with unaided visibility from the Moon. · 这一传言很可能混淆了借助成像设备从低轨偶尔辨认，与从月球肉眼可见这两件事。",
       reasoning: [
-        "Visibility depends on contrast and angular resolution, not simply the wall's length.",
-        "A photographed feature from orbit does not establish naked-eye visibility from lunar distance.",
-        "The cited authorities are independent and converge on the same conclusion.",
+        "Visibility depends on contrast and angular resolution, not simply the wall's length. · 可见性取决于对比度和角分辨率，并非只取决于长城的长度。",
+        "A photographed feature from orbit does not establish naked-eye visibility from lunar distance. · 从轨道拍到某个地物，并不能证明从月球距离可以肉眼看见。",
+        "The cited authorities are independent and converge on the same conclusion. · 被引用的权威来源相互独立，且结论一致。",
       ],
       missingEvidence: [],
       evidenceAssessments: [],

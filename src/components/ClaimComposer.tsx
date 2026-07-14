@@ -9,9 +9,18 @@ const MODES: Array<{ id: InputKind; label: string; icon: typeof Type }> = [
 ];
 
 const SAMPLES = [
-  "The Great Wall of China is visible from the Moon with the naked eye.",
-  "The Eiffel Tower becomes taller during hot weather because metal expands.",
-  "A viral post says octopuses have three hearts and blue blood.",
+  {
+    claim: "The Great Wall of China is visible from the Moon with the naked eye.",
+    zh: "肉眼可以从月球上看到万里长城。",
+  },
+  {
+    claim: "The Eiffel Tower becomes taller during hot weather because metal expands.",
+    zh: "由于金属热胀冷缩，埃菲尔铁塔在炎热天气中会变高。",
+  },
+  {
+    claim: "A viral post says octopuses have three hearts and blue blood.",
+    zh: "一则热传帖文称章鱼有三颗心脏和蓝色血液。",
+  },
 ];
 
 interface Props {
@@ -49,11 +58,11 @@ export function ClaimComposer({
     if (!file) return;
     setFileError("");
     if (!new Set(["image/png", "image/jpeg", "image/webp"]).has(file.type)) {
-      setFileError("Use a PNG, JPEG, or WebP image.");
+      setFileError("Use a PNG, JPEG, or WebP image. · 请使用 PNG、JPEG 或 WebP 图片。");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setFileError("Image must be smaller than 5 MB.");
+      setFileError("Image must be smaller than 5 MB. · 图片需小于 5 MB。");
       return;
     }
     const reader = new FileReader();
@@ -70,6 +79,7 @@ export function ClaimComposer({
       <h2 id="composer-title">Start with a claim.</h2>
       <p className="heading-zh">从一条主张开始。</p>
       <p className="section-copy">Paste the exact text, a public article, or a screenshot worth checking.</p>
+      <p className="section-copy-zh">粘贴原始文本、公开文章，或一张需要核查的截图。</p>
 
       <div className="mode-tabs" aria-label="Input type">
         {MODES.map(({ id, label, icon: Icon }) => (
@@ -107,7 +117,7 @@ export function ClaimComposer({
             onChange={(event) => onContentChange(event.target.value)}
             placeholder="https://example.com/article"
           />
-          <small>We extract the central claim and retrieve fresh related coverage.</small>
+          <small>We extract the central claim and retrieve fresh related coverage. · 系统会提取核心主张并检索最新相关报道。</small>
         </label>
       )}
 
@@ -123,13 +133,13 @@ export function ClaimComposer({
           {imageDataUrl ? (
             <button type="button" className="image-preview" onClick={() => fileRef.current?.click()}>
               <img src={imageDataUrl} alt="Uploaded claim" />
-              <span>{imageName} · click to replace</span>
+              <span>{imageName} · click to replace / 点击替换</span>
             </button>
           ) : (
             <button type="button" className="upload-zone" onClick={() => fileRef.current?.click()}>
               <UploadCloud size={28} />
               <strong>Choose a screenshot · 选择截图</strong>
-              <span>PNG, JPEG, or WebP · max 5 MB</span>
+              <span>PNG, JPEG, or WebP · max 5 MB / 最大 5 MB</span>
             </button>
           )}
           <label className="field-block compact">
@@ -137,7 +147,7 @@ export function ClaimComposer({
             <input
               value={content}
               onChange={(event) => onContentChange(event.target.value)}
-              placeholder="Where did you see this?"
+              placeholder="Where did you see this? / 你在哪里看到的？"
               maxLength={500}
             />
           </label>
@@ -170,14 +180,14 @@ export function ClaimComposer({
           <button
             type="button"
             className="sample-chip"
-            key={sample}
+            key={sample.claim}
             onClick={() => {
               onKindChange("text");
-              onContentChange(sample);
+              onContentChange(sample.claim);
             }}
           >
             <span>{String(index + 1).padStart(2, "0")}</span>
-            {sample}
+            <span className="sample-copy">{sample.claim}<small>{sample.zh}</small></span>
           </button>
         ))}
       </div>

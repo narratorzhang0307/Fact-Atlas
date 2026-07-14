@@ -58,7 +58,7 @@ function mergeSourceAssessment(index, verdicts) {
   const items = verdicts.flatMap((verdict) =>
     verdict.evidenceAssessments.filter((item) => item.sourceIndex === index + 1),
   );
-  if (!items.length) return { stance: "context", reliability: 0, reason: "Not directly assessed by either model." };
+  if (!items.length) return { stance: "context", reliability: 0, reason: "Not directly assessed by either model. · 两个模型均未直接评估此来源。" };
   const weighted = items.reduce(
     (sum, item) => sum + STANCE_VALUE[item.stance] * item.reliability / 100,
     0,

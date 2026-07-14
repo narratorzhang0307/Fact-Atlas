@@ -81,7 +81,7 @@ export function calculateTruthScore(modelVerdicts, sourceCount) {
       evidenceBalance: Math.round(50 + 50 * evidenceBalance),
       sourceCoverage: roundPercent(sourceCoverage),
       modelAgreement: roundPercent(modelAgreement),
-      formula: "55% model consensus + 45% source-weighted evidence; weak evidence is pulled toward 50.",
+      formula: "55% model consensus + 45% source-weighted evidence; weak evidence is pulled toward 50. · 55% 模型共识 + 45% 来源加权证据；弱证据会将评分拉回 50。",
     },
   };
 }
