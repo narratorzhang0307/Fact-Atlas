@@ -33,6 +33,42 @@ export function parseGoogleNewsRss(xml, limit = 6) {
   }).filter((item) => item.url);
 }
 
+export function parseBingNewsRss(xml, limit = 6) {
+  const items = String(xml).match(/<item>[\s\S]*?<\/item>/gi) ?? [];
+  return items.slice(0, limit).map((item, index) => {
+    const url = textFromTag(item, "link");
+    const publisher = textFromTag(item, "News:Source") || (() => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        return "Unknown publisher";
+      }
+    })();
+    return {
+      id: `bing-news-${index + 1}`,
+      title: textFromTag(item, "title") || "Untitled source",
+      url,
+      publisher,
+      publisherUrl: "https://www.bing.com/news",
+      publishedAt: textFromTag(item, "pubDate") || null,
+      snippet: textFromTag(item, "description") || textFromTag(item, "title"),
+      origin: "Bing News RSS",
+    };
+  }).filter((item) => item.url);
+}
+
+async function fetchRssSources(url, parser, limit, signal) {
+  const response = await fetch(url, {
+    // Cloudflare Workers reject attempts to set the restricted User-Agent header.
+    headers: { Accept: "application/rss+xml, application/xml, text/xml" },
+    signal,
+  });
+  if (!response.ok) throw new Error(`Evidence search returned ${response.status}.`);
+  const sources = parser(await response.text(), limit);
+  if (!sources.length) throw new Error("Evidence search returned no usable sources.");
+  return sources;
+}
+
 export async function searchNewsEvidence(query, { limit = 6, signal } = {}) {
   const cleanQuery = String(query).replace(/\s+/g, " ").trim().slice(0, 320);
   if (!cleanQuery) return [];
@@ -40,14 +76,18 @@ export async function searchNewsEvidence(query, { limit = 6, signal } = {}) {
   const params = isChinese
     ? "hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
     : "hl=en-US&gl=US&ceid=US:en";
-  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(cleanQuery)}&${params}`;
-  const response = await fetch(url, {
-    // Cloudflare Workers reject attempts to set the restricted User-Agent header.
-    headers: { Accept: "application/rss+xml, application/xml, text/xml" },
-    signal,
-  });
-  if (!response.ok) throw new Error(`Evidence search returned ${response.status}.`);
-  return parseGoogleNewsRss(await response.text(), limit);
+  const encodedQuery = encodeURIComponent(cleanQuery);
+  const googleUrl = `https://news.google.com/rss/search?q=${encodedQuery}&${params}`;
+  const bingUrl = `https://www.bing.com/news/search?q=${encodedQuery}&format=rss&mkt=en-US&setlang=en-US`;
+
+  try {
+    return await Promise.any([
+      fetchRssSources(googleUrl, parseGoogleNewsRss, limit, signal),
+      fetchRssSources(bingUrl, parseBingNewsRss, limit, signal),
+    ]);
+  } catch {
+    throw new Error("Public news evidence search is temporarily unavailable.");
+  }
 }
 
 function isPrivateIp(address) {

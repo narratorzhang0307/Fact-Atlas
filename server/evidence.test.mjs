@@ -3,6 +3,7 @@ import {
   assertPublicUrl,
   dedupeSources,
   fetchUrlEvidence,
+  parseBingNewsRss,
   parseGoogleNewsRss,
   searchNewsEvidence,
 } from "./evidence.mjs";
@@ -13,6 +14,15 @@ describe("evidence parsing", () => {
     const sources = parseGoogleNewsRss(xml);
     expect(sources).toHaveLength(1);
     expect(sources[0]).toMatchObject({ publisher: "Publisher", title: "Claim checked - Publisher" });
+  });
+
+  it("parses Bing News RSS and preserves its named publisher", () => {
+    const xml = `<rss xmlns:News="https://www.bing.com/news"><channel><item><title>Claim checked</title><link>https://www.bing.com/news/click</link><pubDate>Tue, 14 Jul 2026 10:00:00 GMT</pubDate><description>Evidence summary</description><News:Source>Example News</News:Source></item></channel></rss>`;
+    expect(parseBingNewsRss(xml)).toMatchObject([{
+      publisher: "Example News",
+      origin: "Bing News RSS",
+      title: "Claim checked",
+    }]);
   });
 
   it("deduplicates repeated publisher/title pairs", () => {
@@ -33,6 +43,10 @@ describe("evidence parsing", () => {
       .mockImplementationOnce(async (_url, options) => {
         expect(new Headers(options.headers).has("User-Agent")).toBe(false);
         return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
+      })
+      .mockImplementationOnce(async (_url, options) => {
+        expect(new Headers(options.headers).has("User-Agent")).toBe(false);
+        return new Response("Unavailable", { status: 503 });
       })
       .mockImplementationOnce(async (_url, options) => {
         expect(new Headers(options.headers).has("User-Agent")).toBe(false);

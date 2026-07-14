@@ -130,9 +130,10 @@ export async function verifyClaim(
       retrievalStatus = "partial";
     }
     const sources = dedupeSources([...(submittedSource ? [submittedSource] : []), ...newsSources]);
+    const retrievalProviders = [...new Set(sources.map((source) => source.origin).filter(Boolean))];
     trace.push({
       stage: "evidence-retrieval",
-      provider: "Google News RSS + submitted page",
+      provider: retrievalProviders.join(" + ") || "Public evidence retrieval",
       model: null,
       requestId: null,
       startedAt: new Date(Date.now() - (performance.now() - retrievalStarted)).toISOString(),
