@@ -3,6 +3,8 @@ import {
   ArrowUpRight,
   BrainCircuit,
   Check,
+  ChevronLeft,
+  ChevronRight,
   CircleHelp,
   Clock3,
   Copy,
@@ -13,7 +15,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import type { EvidenceSource, SourceStance, TraceStep, VerificationResult, Verdict } from "../types";
 
 const VERDICT_LABEL: Record<Verdict, string> = {
@@ -126,10 +128,34 @@ function TraceRow({ step, preview }: { step: TraceStep; preview: boolean }) {
   );
 }
 
+function BlockStamp({ number, label, proof }: { number: string; label: string; proof: string }) {
+  return (
+    <div className="block-stamp">
+      <span>Block {number} · {label}</span>
+      <code>{proof}</code>
+    </div>
+  );
+}
+
 export function ResultView({ result }: { result: VerificationResult }) {
   const [copied, setCopied] = useState(false);
+  const [activeBlock, setActiveBlock] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const preview = result.mode === "preview";
   const scoreStyle = { "--score-angle": `${result.truthScore * 3.6}deg` } as CSSProperties;
+  const shortCaseId = result.id.replace(/^fr_|^preview_/, "").slice(-12).toUpperCase();
+  const blockCount = 4 + (result.missingEvidence.length > 0 ? 1 : 0);
+
+  const moveToBlock = (index: number) => {
+    setActiveBlock(Math.max(0, Math.min(blockCount - 1, index)));
+  };
+
+  const finishSwipe = (clientX: number) => {
+    if (touchStartX.current === null) return;
+    const distance = clientX - touchStartX.current;
+    if (Math.abs(distance) >= 48) moveToBlock(activeBlock + (distance < 0 ? 1 : -1));
+    touchStartX.current = null;
+  };
 
   const copyReport = async () => {
     const report = `${result.claim}\n\nTruth Score: ${result.truthScore}/100 · ${VERDICT_LABEL[result.verdict]}\n${result.summary}\n\nSources:\n${result.sources.map((source, index) => `${index + 1}. ${source.title} — ${source.url}`).join("\n")}`;
@@ -147,9 +173,51 @@ export function ResultView({ result }: { result: VerificationResult }) {
         </div>
       )}
 
-      <section className={`verdict-card card verdict-${result.verdict}`}>
+      <nav className="chain-index" aria-label="Evidence block chain · 证据区块链路">
+        <div className="chain-index-title">
+          <Fingerprint size={16} />
+          <span>Evidence chain <small>证据区块链路</small></span>
+        </div>
+        <div className="chain-index-links">
+          <button type="button" className={activeBlock === 0 ? "active" : ""} onClick={() => moveToBlock(0)}><b>01</b><span>Verdict <small>结论</small></span></button>
+          <button type="button" className={activeBlock === 1 ? "active" : ""} onClick={() => moveToBlock(1)}><b>02</b><span>Sources <small>来源</small></span></button>
+          <button type="button" className={activeBlock === 2 ? "active" : ""} onClick={() => moveToBlock(2)}><b>03</b><span>Review <small>审查</small></span></button>
+          <button type="button" className={activeBlock === 3 ? "active" : ""} onClick={() => moveToBlock(3)}><b>04</b><span>Proof <small>回执</small></span></button>
+          {result.missingEvidence.length > 0 && (
+            <button type="button" className={activeBlock === 4 ? "active" : ""} onClick={() => moveToBlock(4)}><b>05</b><span>Gaps <small>缺口</small></span></button>
+          )}
+        </div>
+      </nav>
+
+      <div className="chain-deck-shell">
+        <button
+          type="button"
+          className="deck-arrow deck-arrow-left"
+          aria-label="Previous block · 上一个区块"
+          disabled={activeBlock === 0}
+          onClick={() => moveToBlock(activeBlock - 1)}
+        >
+          <ChevronLeft size={21} />
+        </button>
+        <div
+          className={`chain-deck deck-active-${activeBlock + 1}`}
+          tabIndex={0}
+          role="group"
+          aria-label={`Evidence block ${activeBlock + 1} of ${blockCount} · 证据区块 ${activeBlock + 1}/${blockCount}`}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") moveToBlock(activeBlock - 1);
+            if (event.key === "ArrowRight") moveToBlock(activeBlock + 1);
+          }}
+          onTouchStart={(event) => { touchStartX.current = event.changedTouches[0]?.clientX ?? null; }}
+          onTouchEnd={(event) => finishSwipe(event.changedTouches[0]?.clientX ?? 0)}
+        >
+          <div className="deck-card" hidden={activeBlock !== 0}>
+            <section className={`verdict-card card verdict-${result.verdict}`}>
         <div className="verdict-topline">
-          <span className="section-kicker"><ShieldCheck size={14} /> Verification result · 核查结果</span>
+          <div className="block-heading">
+            <BlockStamp number="01" label="Verdict · 结论" proof={`FR#${shortCaseId}`} />
+            <span className="section-kicker"><ShieldCheck size={14} /> Verification result · 核查结果</span>
+          </div>
           <button type="button" className="copy-button" onClick={copyReport}>
             {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied · 已复制" : "Copy · 复制报告"}
           </button>
@@ -192,11 +260,14 @@ export function ResultView({ result }: { result: VerificationResult }) {
           ))}
           <p><GitCompareArrows size={15} /> {result.scoring.formula}</p>
         </div>
-      </section>
+            </section>
+          </div>
 
-      <section className="result-section card">
+          <div className="deck-card" hidden={activeBlock !== 1}>
+            <section className="result-section card">
         <div className="result-section-head">
           <div>
+            <BlockStamp number="02" label="Sources · 来源" proof={`${result.sources.length} SOURCES`} />
             <div className="result-title-line">
               <span className="panel-number">02</span>
               <span className="section-kicker"><DatabaseZap size={14} /> Evidence ledger · 证据账本</span>
@@ -210,11 +281,14 @@ export function ResultView({ result }: { result: VerificationResult }) {
             <SourceCard key={source.id} source={source} index={index} />
           )) : <p className="empty-state">No live sources were retrieved. The score is intentionally pulled toward uncertainty. · 未检索到实时来源，系统会主动将评分拉回不确定区间。</p>}
         </div>
-      </section>
+            </section>
+          </div>
 
-      <section className="result-section card">
+          <div className="deck-card" hidden={activeBlock !== 2}>
+            <section className="result-section card">
         <div className="result-section-head">
           <div>
+            <BlockStamp number="03" label="Consensus · 共识" proof={`${result.models.length} MODELS`} />
             <div className="result-title-line">
               <span className="panel-number">03</span>
               <span className="section-kicker"><BrainCircuit size={14} /> Adversarial review · 对抗审查</span>
@@ -248,11 +322,14 @@ export function ResultView({ result }: { result: VerificationResult }) {
             </article>
           ))}
         </div>
-      </section>
+            </section>
+          </div>
 
-      <section className="result-section card">
+          <div className="deck-card" hidden={activeBlock !== 3}>
+            <section className="result-section card">
         <div className="result-section-head">
           <div>
+            <BlockStamp number="04" label="Receipts · 回执" proof={`${result.trace.length} STEPS`} />
             <div className="result-title-line">
               <span className="panel-number">04</span>
               <span className="section-kicker"><Fingerprint size={14} /> Provenance trace · 溯源轨迹</span>
@@ -264,17 +341,37 @@ export function ResultView({ result }: { result: VerificationResult }) {
         <ol className="trace-list">
           {result.trace.map((step, index) => <TraceRow key={`${step.stage}-${index}`} step={step} preview={preview} />)}
         </ol>
-      </section>
-
-      {result.missingEvidence.length > 0 && (
-        <section className="missing-card card">
-          <div className="result-title-line">
-            <span className="panel-number">05</span>
-            <span className="section-kicker"><AlertTriangle size={14} /> What could change this result · 待补证据</span>
+            </section>
           </div>
-          <ul>{result.missingEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
-        </section>
-      )}
+
+          {result.missingEvidence.length > 0 && (
+            <div className="deck-card" hidden={activeBlock !== 4}>
+              <section className="missing-card card">
+                <BlockStamp number="05" label="Open gaps · 证据缺口" proof={`${result.missingEvidence.length} ITEMS`} />
+                <div className="result-title-line">
+                  <span className="panel-number">05</span>
+                  <span className="section-kicker"><AlertTriangle size={14} /> What could change this result · 待补证据</span>
+                </div>
+                <ul>{result.missingEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
+              </section>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="deck-arrow deck-arrow-right"
+          aria-label="Next block · 下一个区块"
+          disabled={activeBlock === blockCount - 1}
+          onClick={() => moveToBlock(activeBlock + 1)}
+        >
+          <ChevronRight size={21} />
+        </button>
+      </div>
+      <div className="deck-progress" aria-live="polite">
+        <span>Block {String(activeBlock + 1).padStart(2, "0")} / {String(blockCount).padStart(2, "0")}</span>
+        <i><b style={{ width: `${((activeBlock + 1) / blockCount) * 100}%` }} /></i>
+        <small>Use arrows or swipe · 使用箭头或滑动</small>
+      </div>
     </div>
   );
 }
