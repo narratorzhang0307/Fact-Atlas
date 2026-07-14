@@ -1,4 +1,4 @@
-import { ArrowRight, Github, Network, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Github, Network, Radio, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ClaimComposer } from "./components/ClaimComposer";
 import { ResultView } from "./components/ResultView";
@@ -64,84 +64,113 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="FactRelay home">
-          <span className="brand-mark"><Network size={20} /></span>
-          <span>FactRelay</span>
-        </a>
-        <div className="header-meta">
-          <span><ShieldCheck size={15} /> Traceable by design</span>
-          <a href="https://github.com/narratorzhang0307/FactRelay" target="_blank" rel="noreferrer">
-            <Github size={16} /> GitHub
+      <div className="product-frame">
+        <header className="site-header">
+          <a className="brand" href="#top" aria-label="FactRelay home">
+            <span className="brand-mark"><Network size={19} /></span>
+            <span>FactRelay</span>
           </a>
-        </div>
-      </header>
-
-      <main id="top">
-        <section className="hero">
-          <div className="hero-copy">
-            <span className="hero-eyebrow"><Sparkles size={15} /> Built on the Gonka Network</span>
-            <h1>Don’t trust one model.<br /><em>Trace the disagreement.</em></h1>
-            <p>
-              FactRelay turns a public claim into a source-backed investigation, sends it through two
-              adversarial Gonka models, and exposes every inference receipt.
-            </p>
+          <div className="header-status" aria-label="Network status">
+            <span className={health?.liveReady ? "pulse-dot connected" : "pulse-dot"} />
+            {health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}
           </div>
-          <div className="hero-flow" aria-label="Verification flow">
-            <div><span>01</span><strong>Retrieve</strong><small>Live public evidence</small></div>
-            <ArrowRight size={18} />
-            <div><span>02</span><strong>Challenge</strong><small>Kimi × MiniMax</small></div>
-            <ArrowRight size={18} />
-            <div><span>03</span><strong>Prove</strong><small>Score + request IDs</small></div>
+          <div className="header-meta">
+            <span><ShieldCheck size={15} /> Auditable by design</span>
+            <a href="https://github.com/narratorzhang0307/FactRelay" target="_blank" rel="noreferrer">
+              <Github size={16} /> <span>GitHub</span>
+            </a>
           </div>
-        </section>
+        </header>
 
-        <section className="workspace" aria-label="Fact checking workspace">
-          <aside>
-            <ClaimComposer
-              kind={kind}
-              content={content}
-              imageDataUrl={imageDataUrl}
-              imageName={imageName}
-              loading={loading}
-              liveReady={Boolean(health?.liveReady)}
-              onKindChange={setKind}
-              onContentChange={setContent}
-              onImageChange={(dataUrl, name) => {
-                setImageDataUrl(dataUrl);
-                setImageName(name);
-              }}
-              onSubmit={() => void runVerification()}
-              onPreview={() => void loadPreview()}
-            />
-          </aside>
-          <div className="result-column">
-            {error && (
-              <div className="error-banner" role="alert">
-                <strong>Verification paused</strong>
-                <span>{error}</span>
-                {!health?.liveReady && <small>Add `GONKA_API_KEY` to `.env.local`, then restart the server.</small>}
+        <main id="top">
+          <section className="hero">
+            <div className="hero-copy">
+              <span className="hero-eyebrow"><Radio size={14} /> Case intelligence on Gonka · Gonka 事实核查</span>
+              <h1>Question the claim.<br /><em>Keep the receipts.</em></h1>
+              <p className="hero-cn">质疑主张，保留每一张推理回执。</p>
+              <p>
+                One public claim enters. Independent evidence, two adversarial models, and a replayable
+                inference trail come back.
+              </p>
+              <div className="hero-tags" aria-label="Product capabilities">
+                <span># live evidence</span>
+                <span># two-model review</span>
+                <span># request IDs</span>
               </div>
-            )}
-            {loading && (
-              <div className="loading-card card" aria-live="polite">
-                <div className="loading-orbit"><span /><i /></div>
-                <div>
-                  <span className="section-kicker">Live run in progress</span>
-                  <h2>Two models are testing the evidence.</h2>
-                  <p>FactRelay is retrieving sources, running the investigator, then asking the skeptic to challenge it.</p>
+            </div>
+
+            <div className="relay-console" aria-label="FactRelay verification route">
+              <div className="relay-console-head">
+                <span>Relay status</span>
+                <strong>{health?.liveReady ? "LIVE" : "PREVIEW"}</strong>
+              </div>
+              <div className="relay-console-stat">
+                <strong>02</strong>
+                <span>models challenge<br />every verdict</span>
+              </div>
+              <div className="relay-route">
+                <div><span>01</span><strong>Sources</strong></div>
+                <ArrowRight size={16} />
+                <div><span>02</span><strong>Challenge</strong></div>
+                <ArrowRight size={16} />
+                <div><span>03</span><strong>Proof</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <div className={health?.liveReady ? "network-strip connected" : "network-strip"}>
+            <span><i /> {health?.liveReady ? "GonkaRouter connected · 已连接" : "Interface preview · 界面预览"}</span>
+            <span>Kimi-K2.6 × MiniMax-M2.7</span>
+            <span>{health?.liveReady ? "Real request IDs · 真实回执" : "Add a Gonka key · 待接入密钥"}</span>
+          </div>
+
+          <section className="workspace" aria-label="Fact checking workspace">
+            <aside>
+              <ClaimComposer
+                kind={kind}
+                content={content}
+                imageDataUrl={imageDataUrl}
+                imageName={imageName}
+                loading={loading}
+                liveReady={Boolean(health?.liveReady)}
+                onKindChange={setKind}
+                onContentChange={setContent}
+                onImageChange={(dataUrl, name) => {
+                  setImageDataUrl(dataUrl);
+                  setImageName(name);
+                }}
+                onSubmit={() => void runVerification()}
+                onPreview={() => void loadPreview()}
+              />
+            </aside>
+            <div className="result-column">
+              {error && (
+                <div className="error-banner" role="alert">
+                  <strong>Verification paused</strong>
+                  <span>{error}</span>
+                  {!health?.liveReady && <small>Add `GONKA_API_KEY` to `.env.local`, then restart the server.</small>}
                 </div>
-              </div>
-            )}
-            {!loading && result && <ResultView result={result} />}
-          </div>
-        </section>
-      </main>
+              )}
+              {loading && (
+                <div className="loading-card card" aria-live="polite">
+                  <div className="loading-orbit"><span /><i /></div>
+                  <div>
+                    <span className="section-kicker">Live run in progress</span>
+                    <h2>Two models are testing the evidence.</h2>
+                    <p>FactRelay is retrieving sources, running the investigator, then asking the skeptic to challenge it.</p>
+                  </div>
+                </div>
+              )}
+              {!loading && result && <ResultView result={result} />}
+            </div>
+          </section>
+        </main>
 
-      <footer>
-        <span>FactRelay · AI³ Growth Hackathon 2026</span>
-        <span>AI inference exclusively through GonkaRouter</span>
-      </footer>
+        <footer>
+          <span>FactRelay · AI³ Growth Hackathon 2026</span>
+          <span>AI inference exclusively through GonkaRouter</span>
+        </footer>
+      </div>
     </div>
   );
 }

@@ -23,10 +23,23 @@ const VERDICT_LABEL: Record<Verdict, string> = {
   insufficient: "Insufficient evidence",
 };
 
+const VERDICT_ZH: Record<Verdict, string> = {
+  supported: "证据支持",
+  refuted: "事实不符",
+  mixed: "证据不一",
+  insufficient: "证据不足",
+};
+
 const STANCE_LABEL: Record<SourceStance, string> = {
   support: "Supports",
   refute: "Refutes",
   context: "Context",
+};
+
+const STANCE_ZH: Record<SourceStance, string> = {
+  support: "支持",
+  refute: "反驳",
+  context: "背景",
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -35,6 +48,19 @@ const STAGE_LABEL: Record<string, string> = {
   "evidence-retrieval": "Retrieve live evidence",
   "investigator-analysis": "Kimi investigation",
   "skeptic-cross-check": "MiniMax cross-check",
+};
+
+const STAGE_ZH: Record<string, string> = {
+  "claim-extraction": "提取文章主张",
+  "vision-claim-extraction": "读取图片主张",
+  "evidence-retrieval": "检索实时证据",
+  "investigator-analysis": "Kimi 调查",
+  "skeptic-cross-check": "MiniMax 交叉质疑",
+};
+
+const ROLE_ZH: Record<string, string> = {
+  Investigator: "调查方",
+  Skeptic: "质疑方",
 };
 
 function formatModel(model: string) {
@@ -69,7 +95,7 @@ function SourceCard({ source, index }: { source: EvidenceSource; index: number }
         </a>
         <p>{source.snippet}</p>
         <div className="source-assessment">
-          <span className={`stance ${source.stance}`}>{stanceIcon(source.stance)} {STANCE_LABEL[source.stance]}</span>
+          <span className={`stance ${source.stance}`}>{stanceIcon(source.stance)} {STANCE_LABEL[source.stance]} · {STANCE_ZH[source.stance]}</span>
           <span>{source.reliability}% source confidence</span>
           <span className="assessment-reason">{source.reason}</span>
         </div>
@@ -85,6 +111,7 @@ function TraceRow({ step, preview }: { step: TraceStep; preview: boolean }) {
       <div className="trace-icon">{isModel ? <BrainCircuit size={17} /> : <Search size={17} />}</div>
       <div className="trace-copy">
         <strong>{STAGE_LABEL[step.stage] ?? step.stage}</strong>
+        <small>{STAGE_ZH[step.stage] ?? "执行步骤"}</small>
         <span>{step.provider}{step.model ? ` · ${formatModel(step.model)}` : ""}</span>
       </div>
       <div className="trace-proof">
@@ -116,7 +143,7 @@ export function ResultView({ result }: { result: VerificationResult }) {
       {preview && (
         <div className="preview-banner">
           <AlertTriangle size={16} />
-          Preview fixture — useful for exploring the interface, but it contains no live Gonka Request IDs.
+          Preview fixture · 界面预览数据 — contains no live Gonka Request IDs / 不含真实 Gonka 回执。
         </div>
       )}
 
@@ -124,7 +151,7 @@ export function ResultView({ result }: { result: VerificationResult }) {
         <div className="verdict-topline">
           <span className="section-kicker"><ShieldCheck size={14} /> Verification result</span>
           <button type="button" className="copy-button" onClick={copyReport}>
-            {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied" : "Copy report"}
+            {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied · 已复制" : "Copy · 复制报告"}
           </button>
         </div>
         <div className="verdict-grid">
@@ -135,11 +162,17 @@ export function ResultView({ result }: { result: VerificationResult }) {
             </div>
           </div>
           <div className="verdict-copy">
-            <div className={`verdict-pill ${result.verdict}`}>{VERDICT_LABEL[result.verdict]}</div>
+            <div className="verdict-label-row">
+              <div className={`verdict-pill ${result.verdict}`}>{VERDICT_LABEL[result.verdict]} · {VERDICT_ZH[result.verdict]}</div>
+              <div className={`verdict-seal seal-${result.verdict}`} aria-label={`${VERDICT_LABEL[result.verdict]} case seal`}>
+                <span>{VERDICT_LABEL[result.verdict]}</span>
+                <small>{VERDICT_ZH[result.verdict]} · {preview ? "预览案" : "实时案"}</small>
+              </div>
+            </div>
             <h2>{result.claim}</h2>
             <p>{result.summary}</p>
             <div className="confidence-row">
-              <span>Decision confidence</span>
+              <span>Decision confidence · 结论信心</span>
               <div className="confidence-track"><i style={{ width: `${result.confidence}%` }} /></div>
               <strong>{result.confidence}%</strong>
             </div>
@@ -164,8 +197,11 @@ export function ResultView({ result }: { result: VerificationResult }) {
       <section className="result-section card">
         <div className="result-section-head">
           <div>
-            <span className="section-kicker"><DatabaseZap size={14} /> Evidence ledger</span>
-            <h2>{result.sources.length} retrievable sources</h2>
+            <div className="result-title-line">
+              <span className="panel-number">02</span>
+              <span className="section-kicker"><DatabaseZap size={14} /> Evidence ledger · 证据账本</span>
+            </div>
+            <h2>{result.sources.length} retrievable sources <span className="heading-zh">可追溯来源</span></h2>
           </div>
           <span className="section-note">Source numbers are the only citations models may use.</span>
         </div>
@@ -179,8 +215,11 @@ export function ResultView({ result }: { result: VerificationResult }) {
       <section className="result-section card">
         <div className="result-section-head">
           <div>
-            <span className="section-kicker"><BrainCircuit size={14} /> Adversarial review</span>
-            <h2>Two models, distinct responsibilities</h2>
+            <div className="result-title-line">
+              <span className="panel-number">03</span>
+              <span className="section-kicker"><BrainCircuit size={14} /> Adversarial review · 对抗审查</span>
+            </div>
+            <h2>Two models, distinct responsibilities <span className="heading-zh">双模型分工</span></h2>
           </div>
           <span className="section-note">Agreement is measured; disagreement is preserved.</span>
         </div>
@@ -189,10 +228,10 @@ export function ResultView({ result }: { result: VerificationResult }) {
             <article className="model-card" key={model.role}>
               <div className="model-head">
                 <div>
-                  <span>{model.role}</span>
+                  <span>{model.role} · {ROLE_ZH[model.role] ?? "审查方"}</span>
                   <h3>{formatModel(model.model)}</h3>
                 </div>
-                <div className={`mini-verdict ${model.verdict}`}>{VERDICT_LABEL[model.verdict]}</div>
+                <div className={`mini-verdict ${model.verdict}`}>{VERDICT_LABEL[model.verdict]} · {VERDICT_ZH[model.verdict]}</div>
               </div>
               <p>{model.summary}</p>
               <ol>
@@ -214,8 +253,11 @@ export function ResultView({ result }: { result: VerificationResult }) {
       <section className="result-section card">
         <div className="result-section-head">
           <div>
-            <span className="section-kicker"><Fingerprint size={14} /> Provenance trace</span>
-            <h2>Replayable execution path</h2>
+            <div className="result-title-line">
+              <span className="panel-number">04</span>
+              <span className="section-kicker"><Fingerprint size={14} /> Provenance trace · 溯源轨迹</span>
+            </div>
+            <h2>Replayable execution path <span className="heading-zh">可重放执行路径</span></h2>
           </div>
           <span className="section-note">Only upstream IDs are labeled as Gonka requests.</span>
         </div>
@@ -226,7 +268,10 @@ export function ResultView({ result }: { result: VerificationResult }) {
 
       {result.missingEvidence.length > 0 && (
         <section className="missing-card card">
-          <span className="section-kicker"><AlertTriangle size={14} /> What could change this result</span>
+          <div className="result-title-line">
+            <span className="panel-number">05</span>
+            <span className="section-kicker"><AlertTriangle size={14} /> What could change this result · 待补证据</span>
+          </div>
           <ul>{result.missingEvidence.map((item) => <li key={item}>{item}</li>)}</ul>
         </section>
       )}

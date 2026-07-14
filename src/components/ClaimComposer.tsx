@@ -3,9 +3,9 @@ import { useRef, useState } from "react";
 import type { InputKind } from "../types";
 
 const MODES: Array<{ id: InputKind; label: string; icon: typeof Type }> = [
-  { id: "text", label: "Text", icon: Type },
-  { id: "url", label: "Link", icon: Link2 },
-  { id: "image", label: "Image", icon: FileImage },
+  { id: "text", label: "Text 文本", icon: Type },
+  { id: "url", label: "Link 链接", icon: Link2 },
+  { id: "image", label: "Image 图片", icon: FileImage },
 ];
 
 const SAMPLES = [
@@ -63,9 +63,13 @@ export function ClaimComposer({
 
   return (
     <section className="composer card" aria-labelledby="composer-title">
-      <div className="section-kicker"><Radio size={14} /> New verification</div>
-      <h2 id="composer-title">What should we check?</h2>
-      <p className="section-copy">Paste one claim, a public article, or a social-media screenshot.</p>
+      <div className="panel-heading">
+        <span className="panel-number">01</span>
+        <div className="section-kicker"><Radio size={14} /> New case · 新建核查</div>
+      </div>
+      <h2 id="composer-title">Start with a claim.</h2>
+      <p className="heading-zh">从一条主张开始。</p>
+      <p className="section-copy">Paste the exact text, a public article, or a screenshot worth checking.</p>
 
       <div className="mode-tabs" aria-label="Input type">
         {MODES.map(({ id, label, icon: Icon }) => (
@@ -83,11 +87,11 @@ export function ClaimComposer({
 
       {kind === "text" && (
         <label className="field-block">
-          <span>Factual claim</span>
+          <span>Factual claim · 待核查主张</span>
           <textarea
             value={content}
             onChange={(event) => onContentChange(event.target.value)}
-            placeholder="Paste a claim exactly as you saw it…"
+            placeholder="Paste a claim exactly as you saw it… / 粘贴原始表述"
             maxLength={8000}
             rows={7}
           />
@@ -96,7 +100,7 @@ export function ClaimComposer({
 
       {kind === "url" && (
         <label className="field-block">
-          <span>Public article URL</span>
+          <span>Public article URL · 公开文章链接</span>
           <input
             type="url"
             value={content}
@@ -124,12 +128,12 @@ export function ClaimComposer({
           ) : (
             <button type="button" className="upload-zone" onClick={() => fileRef.current?.click()}>
               <UploadCloud size={28} />
-              <strong>Choose a screenshot</strong>
+              <strong>Choose a screenshot · 选择截图</strong>
               <span>PNG, JPEG, or WebP · max 5 MB</span>
             </button>
           )}
           <label className="field-block compact">
-            <span>Optional context</span>
+            <span>Optional context · 补充背景</span>
             <input
               value={content}
               onChange={(event) => onContentChange(event.target.value)}
@@ -149,20 +153,20 @@ export function ClaimComposer({
         data-testid="verify-button"
       >
         <SearchCheck size={19} />
-        {loading ? "Cross-checking…" : "Run live verification"}
+        {loading ? "Cross-checking… / 正在交叉核查" : "Run verification · 开始核查"}
       </button>
 
       <div className={liveReady ? "readiness ready" : "readiness"}>
         <span className="status-dot" />
-        {liveReady ? "GonkaRouter is connected" : "Preview ready · Gonka key needed for live runs"}
+        {liveReady ? "GonkaRouter is connected · 已连接" : "Preview ready · 预览可用，实时核查需密钥"}
       </div>
 
       <div className="samples">
         <div className="samples-head">
-          <span>Try a sample</span>
-          <button type="button" onClick={onPreview}>Reset preview</button>
+          <span>Case starters · 示例</span>
+          <button type="button" onClick={onPreview}>Reset · 重置</button>
         </div>
-        {SAMPLES.map((sample) => (
+        {SAMPLES.map((sample, index) => (
           <button
             type="button"
             className="sample-chip"
@@ -172,6 +176,7 @@ export function ClaimComposer({
               onContentChange(sample);
             }}
           >
+            <span>{String(index + 1).padStart(2, "0")}</span>
             {sample}
           </button>
         ))}
