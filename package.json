@@ -6,6 +6,7 @@
   "description": "Traceable multi-model fact checking powered by GonkaRouter.",
   "scripts": {
     "dev": "node server.mjs",
+    "prebuild": "node scripts/clean-dist.mjs",
     "build": "npm run build:client && npm run build:worker",
     "build:client": "vite build",
     "build:worker": "vite build --config vite.worker.config.ts",
