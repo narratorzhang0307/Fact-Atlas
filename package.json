@@ -10,6 +10,7 @@
     "build": "npm run build:client && npm run build:worker",
     "build:client": "vite build",
     "build:worker": "vite build --config vite.worker.config.ts",
+    "capture:live-demo": "node scripts/capture-live-demo.mjs",
     "start": "NODE_ENV=production node server.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
