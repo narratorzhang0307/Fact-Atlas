@@ -1,5 +1,5 @@
-import { ArrowRight, Github, Network, Radio, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Github, Network, Radio, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { ClaimComposer } from "./components/ClaimComposer";
 import { ResultView } from "./components/ResultView";
 import type { ApiError, HealthStatus, InputKind, VerificationResult } from "./types";
@@ -16,6 +16,33 @@ async function getJson<T>(response: Response): Promise<T> {
   return body as T;
 }
 
+const HERO_BLOCKS = [
+  {
+    number: "01",
+    label: "Sources",
+    labelZh: "来源",
+    title: "evidence before every answer",
+    titleZh: "证据先于每一个回答",
+    detail: "current public sources · 当前公开来源",
+  },
+  {
+    number: "02",
+    label: "Challenge",
+    labelZh: "质疑",
+    title: "models challenge every verdict",
+    titleZh: "模型质疑每一个结论",
+    detail: "Kimi investigator × MiniMax skeptic · 调查方 × 质疑方",
+  },
+  {
+    number: "03",
+    label: "Proof",
+    labelZh: "回执",
+    title: "receipts keep the trail replayable",
+    titleZh: "回执让推理轨迹可重放",
+    detail: "upstream request IDs · 上游请求回执",
+  },
+] as const;
+
 export default function App() {
   const [kind, setKind] = useState<InputKind>("text");
   const [content, setContent] = useState("");
@@ -25,6 +52,13 @@ export default function App() {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [heroBlockIndex, setHeroBlockIndex] = useState(1);
+  const heroTouchStartX = useRef<number | null>(null);
+  const heroBlock = HERO_BLOCKS[heroBlockIndex];
+
+  const moveHeroBlock = (direction: -1 | 1) => {
+    setHeroBlockIndex((current) => (current + direction + HERO_BLOCKS.length) % HERO_BLOCKS.length);
+  };
 
   const loadPreview = async () => {
     try {
@@ -100,21 +134,71 @@ export default function App() {
               </div>
             </div>
 
-            <div className="relay-console" aria-label="FactRelay verification route">
-              <div className="relay-console-head">
-                <span>Relay status · 系统状态</span>
-                <strong>{health?.liveReady ? "LIVE · 实时" : "PREVIEW · 预览"}</strong>
-              </div>
-              <div className="relay-console-stat">
-                <strong>02</strong>
-                <span>models challenge<br />every verdict<br /><small>模型质疑每一个结论</small></span>
-              </div>
-              <div className="relay-route">
-                <div><span>01</span><strong>Sources · 来源</strong></div>
-                <ArrowRight size={16} />
-                <div><span>02</span><strong>Challenge · 质疑</strong></div>
-                <ArrowRight size={16} />
-                <div><span>03</span><strong>Proof · 回执</strong></div>
+            <div className={`relay-deck-shell relay-deck-active-${heroBlockIndex + 1}`}>
+              <div
+                className="relay-console"
+                aria-label={`FactRelay route block ${heroBlock.number} of ${HERO_BLOCKS.length}: ${heroBlock.label}`}
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowLeft") moveHeroBlock(-1);
+                  if (event.key === "ArrowRight") moveHeroBlock(1);
+                }}
+                onTouchStart={(event) => { heroTouchStartX.current = event.touches[0]?.clientX ?? null; }}
+                onTouchEnd={(event) => {
+                  if (heroTouchStartX.current === null) return;
+                  const distance = event.changedTouches[0]?.clientX - heroTouchStartX.current;
+                  heroTouchStartX.current = null;
+                  if (Math.abs(distance) > 42) moveHeroBlock(distance > 0 ? -1 : 1);
+                }}
+              >
+                <div className="relay-console-head">
+                  <span>Relay block · 中继区块</span>
+                  <div className="relay-head-actions">
+                    <button type="button" onClick={() => moveHeroBlock(-1)} aria-label="Previous relay block · 上一个区块"><ChevronLeft size={15} /></button>
+                    <strong>{health?.liveReady ? "LIVE · 实时" : "PREVIEW · 预览"}</strong>
+                    <button type="button" onClick={() => moveHeroBlock(1)} aria-label="Next relay block · 下一个区块"><ChevronRight size={15} /></button>
+                  </div>
+                </div>
+                <div className="relay-console-stat" key={heroBlock.number} aria-live="polite">
+                  <strong>{heroBlock.number}</strong>
+                  <span>{heroBlock.title}<small>{heroBlock.titleZh}</small><em>{heroBlock.detail}</em></span>
+                </div>
+                <div className="relay-card-payload" key={`payload-${heroBlock.number}`}>
+                  {heroBlockIndex === 0 && (
+                    <div className="relay-source-preview" aria-label="Illustrative evidence source previews · 证据来源示意">
+                      <div><i className="source-visual source-visual-orbit" role="img" aria-label="Illustrative orbital image · 轨道图像示意" /><span>IMAGE · 图像</span><strong>Visual source</strong></div>
+                      <div><i className="source-visual source-visual-page" role="img" aria-label="Illustrative public page · 公开网页示意" /><span>LINK · 链接</span><strong>Public page</strong></div>
+                      <div><i className="source-visual source-visual-text" role="img" aria-label="Illustrative text source · 文本来源示意" /><span>TEXT · 文本</span><strong>Source excerpt</strong></div>
+                    </div>
+                  )}
+                  {heroBlockIndex === 1 && (
+                    <div className="relay-model-preview" aria-label="Two-model adversarial review · 双模型对抗审查">
+                      <div><span>INVESTIGATOR · 调查方</span><strong>Kimi-K2.6</strong></div>
+                      <b aria-hidden="true">×</b>
+                      <div><span>SKEPTIC · 质疑方</span><strong>MiniMax-M2.7</strong></div>
+                    </div>
+                  )}
+                  {heroBlockIndex === 2 && (
+                    <div className="relay-proof-preview" aria-label="Gonka request receipt preview · Gonka 请求回执预览">
+                      <span>GONKA REQUEST ID · GONKA 请求回执</span>
+                      <code>{health?.liveReady ? "generated on every live run · 每次实时核查生成" : "live runs only — never fabricated · 仅实时生成，绝不伪造"}</code>
+                    </div>
+                  )}
+                </div>
+                <div className="relay-route" aria-label="Select a relay block">
+                  {HERO_BLOCKS.map((block, index) => (
+                    <button
+                      type="button"
+                      className={index === heroBlockIndex ? "active" : ""}
+                      aria-current={index === heroBlockIndex ? "step" : undefined}
+                      onClick={() => setHeroBlockIndex(index)}
+                      key={block.number}
+                    >
+                      <span>{block.number}</span>
+                      <strong>{block.label} · {block.labelZh}</strong>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
