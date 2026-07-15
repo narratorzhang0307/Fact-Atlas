@@ -16,15 +16,15 @@
 ### 01 · 00:00–00:14 · Problem and product / 问题与产品
 
 **Screen / 画面**
-从手机端 Fact Atlas 主框架开场，展示 Relay、Atlas 和 Signals 三个底部标签。
+从手机端 Fact Atlas 主框架开场，再切换到网页端 + 手机端对照画面，明确展示 Relay、Atlas 和 Signals 三个标签均已完成响应式适配。
 
 **Narration / 旁白**
-个人知识库最危险的，不是缺少信息，而是把未经验证的说法当成事实。Fact Atlas 用三个标签连接两条路径：主动探索，与每日发现。
+个人知识库最危险的，不是缺少信息，而是把未经验证的说法当成事实。Fact Atlas 同时适配网页端和手机端，用三个标签连接主动探索与每日发现。
 
 **English subtitle cues / 英文字幕**
 
 - `00:00.000 → 00:06.500` A personal knowledge base fails when unverified claims quietly become facts.
-- `00:06.500 → 00:14.000` Fact Atlas connects active exploration and daily discovery in three tabs.
+- `00:06.500 → 00:14.000` Fact Atlas adapts to desktop and mobile, connecting active exploration and daily discovery in three tabs.
 
 ### 02 · 00:14–00:30.5 · Two knowledge paths / 两条知识路径
 

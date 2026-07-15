@@ -1,8 +1,8 @@
 # Fact Atlas 36-shot narration visual pack
 
-The narration visual pack converts the existing 150-second, 19-cue demo script into 36 editing-ready 1920×1080 frames. It combines four visual modes:
+The narration visual pack converts the existing 150-second, 19-cue demo script into 36 editing-ready 1920×1080 frames. The responsive revision explicitly states that Fact Atlas supports both desktop and mobile, and dedicates 10 main shots to centered mobile UI inside a restrained device shell. It combines four visual modes:
 
-- real desktop and mobile product captures;
+- real desktop and mobile product captures, including Relay, Evidence Council, Atlas, and Signals;
 - interaction close-ups from a live Gonka verification run;
 - conceptual product diagrams;
 - Gonka Router architecture, request-receipt, scoring, human-gate, Mapbox, and privacy diagrams.

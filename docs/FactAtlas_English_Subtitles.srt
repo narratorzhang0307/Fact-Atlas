@@ -4,7 +4,7 @@ A personal knowledge base fails when unverified claims quietly become facts.
 
 2
 00:00:06,500 --> 00:00:14,000
-Fact Atlas connects active exploration and daily discovery in three tabs.
+Fact Atlas adapts to desktop and mobile, connecting active exploration and daily discovery in three tabs.
 
 3
 00:00:14,000 --> 00:00:22,000
