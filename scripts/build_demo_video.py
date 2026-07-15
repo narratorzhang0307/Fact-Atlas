@@ -225,6 +225,15 @@ def build() -> None:
     silent_video = WORK / "silent-video.mp4"
     run(str(FFMPEG), "-y", "-f", "concat", "-safe", "0", "-i", visual_list.name, "-c", "copy", silent_video.name, cwd=WORK)
 
+    clean_video = VIDEO_DIR / "FactRelay_Demo_2m30s_Clean_NoAudio.mp4"
+    run(
+        str(FFMPEG), "-y", "-i", str(silent_video), "-map", "0:v:0", "-an", "-sn",
+        "-c:v", "copy", "-movflags", "+faststart",
+        "-metadata", "title=FactRelay — Clean visual master",
+        "-metadata", "comment=No narration, no music, no burned subtitles",
+        str(clean_video),
+    )
+
     audio_segments = []
     for index, (duration, narration) in enumerate(SCENES, 1):
         raw = WORK / f"voice-{index:02d}.aiff"
