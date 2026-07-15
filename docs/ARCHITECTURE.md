@@ -66,11 +66,15 @@ flowchart TB
 
 ## Request sequence
 
+The executable Agent/Skill decomposition and handoff contracts are documented in [`AGENT_SYSTEM.md`](AGENT_SYSTEM.md). Both `/api/demo` and every new live verification result return the Relay agent contract; `/api/signals` returns its supervisor, selected topic agent, and shared Skill list.
+
 ### Daily topic signal
 
 ```text
-topic agent
-  → current public-news retrieval
+Signal Supervisor
+  → selected date + one of eight topic agents
+  → multi-region Google/Bing public-news retrieval
+  → deterministic date-window filter + normalization + deduplication
   → Kimi importance ranking through GonkaRouter
   → bilingual checkable-claim candidates + upstream request receipt
   → user selection
@@ -203,6 +207,7 @@ FactRelay's evidence layer uses deterministic network retrieval:
 
 - The submitted public page is fetched directly.
 - Related coverage is requested concurrently from Google News RSS and Bing News RSS; the first successful usable result wins.
+- Signals fan out across Google US/GB/CN and Bing US feeds, merge the results deterministically, and expose the exact seven-day coverage window for the selected edition date.
 - The built-in Great Wall/Moon starter transparently adds a small allowlist of live NASA, ESA, and Smithsonian pages. Those pages are fetched at runtime and remain ordinary inspectable evidence, not bundled model answers.
 - The result packet contains title, publisher, timestamp, URL, and excerpt.
 
@@ -225,6 +230,13 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 - A claim may be saved without coordinates and remains visibly unplaced.
 - The browser stores the complete result snapshot locally; the hackathon build does not upload a private Atlas history.
 - Mapbox renders the dark basemap, bright verdict markers, and deterministic explainable links. It is a visualization layer, not an inference provider.
+
+### PWA shell
+
+- The web manifest exposes standalone iOS/Android installation assets and a claim-verification shortcut.
+- The service worker caches only the application shell and static same-origin assets.
+- `/api/*` requests are explicitly network-only, so a prior verification, news edition, receipt, health state, or map configuration cannot be replayed as current data.
+- Offline mode means “the interface can open,” never “the evidence is fresh.”
 
 ### FactRelay server → submitted URL
 

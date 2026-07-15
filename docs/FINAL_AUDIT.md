@@ -25,7 +25,7 @@ Target / 目标：AI³ Growth Hackathon 2026 · Track 3 — Gonka: AI for Societ
 - [x] Remote pages, evidence excerpts, and previous model drafts are labeled untrusted in prompts.
 - [x] API key remains server-side, ignored by Git, and absent from `/api/health`.
 - [x] Images are type-allowlisted and size-bounded.
-- [x] `npm run verify`: TypeScript clean, 34/34 tests across 9 files pass, production client and Worker build pass.
+- [x] `npm run verify`: TypeScript clean, 40/40 tests across 10 files pass, production client and Worker build pass.
 - [x] `npm audit --audit-level=low`: zero known vulnerabilities.
 
 ## Production / 生产部署
