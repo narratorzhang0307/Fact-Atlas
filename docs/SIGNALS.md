@@ -83,3 +83,13 @@ The UI labels OSS hits `ALIYUN OSS · 云端三日缓存`, embedded snapshots `P
 ## Current bundled edition
 
 The repository currently bundles the UTC edition for `2026-07-15`: eight topic Agents and 37 bilingual cards. The compiler and OSS exporter are ready for a rolling three-date preload, but a date is published only after all eight live editions pass the receipt and trace contract. OSS, snapshot, and device-buffer data contain no API keys or private user information.
+
+## Current production object
+
+The complete `2026-07-15` bundle is publicly readable at:
+
+```text
+https://last-night-on-earth.oss-cn-hangzhou.aliyuncs.com/fact-atlas/signals/2026-07-15.json
+```
+
+Its verified SHA-256 is `1771e683e603487f1b039df62a2422cc97d7a8984d1f7d92c8cee08993379434`. A public read-back returned `application/json`, 86,537 bytes, and the same digest as the generated local object. Both production runtimes subsequently returned `cacheLayer: "oss"`, `cacheHit: true`, a non-empty Gonka request ID, and a completed GonkaRouter trace. Only this complete date is currently published; the rolling window does not invent or duplicate missing days.

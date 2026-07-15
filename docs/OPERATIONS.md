@@ -11,6 +11,14 @@ curl -fsS https://fact-atlas.throughtheglass.art/api/health
 
 Both checks matter: the first isolates the Node process, while the second covers DNS, TLS, Nginx, and the application together.
 
+For the currently published Signals date, verify the object layer without exposing any credential:
+
+```bash
+curl -fsS 'https://fact-atlas.throughtheglass.art/api/signals?topic=finance&date=2026-07-15'
+```
+
+The response should report `cacheLayer: "oss"`, `cacheHit: true`, the original `requestId`, and at least one completed `GonkaRouter` trace step. A cache miss is allowed to fall through; it must not be relabeled as an OSS hit.
+
 ## Routine release
 
 ```bash
