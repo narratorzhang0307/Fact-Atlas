@@ -16,7 +16,7 @@ function env(overrides = {}) {
 describe("Sites worker", () => {
   it("reports whether live Gonka verification is configured", async () => {
     const response = await worker.fetch(new Request("https://factrelay.example/api/health"), env());
-    await expect(response.json()).resolves.toMatchObject({ ok: true, liveReady: false });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, liveReady: false, signalCacheReady: false });
   });
 
   it("serves the bilingual preview fixture", async () => {

@@ -141,7 +141,7 @@ export interface DailySignalBrief {
   model: string;
   requestId: string | null;
   cacheHit: boolean;
-  cacheLayer?: "snapshot" | "memory" | "runtime";
+  cacheLayer?: "oss" | "snapshot" | "memory" | "runtime";
   snapshot?: {
     selectedDate: string;
     generatedAt: string;

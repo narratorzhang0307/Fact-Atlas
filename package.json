@@ -12,6 +12,7 @@
     "build:worker": "vite build --config vite.worker.config.ts",
     "build:hosting": "node scripts/stage-hosting.mjs",
     "capture:live-demo": "node scripts/capture-live-demo.mjs",
+    "signals:oss": "node scripts/build-signal-oss-bundles.mjs",
     "signals:snapshot": "node scripts/build-signal-snapshot.mjs",
     "start": "NODE_ENV=production node server.mjs",
     "typecheck": "tsc --noEmit",

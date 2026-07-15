@@ -80,6 +80,7 @@ const worker = {
         return json({
           ok: true,
           liveReady: Boolean(env.GONKA_API_KEY),
+          signalCacheReady: Boolean(env.SIGNAL_CACHE_BASE_URL),
           provider: "GonkaRouter",
           baseUrl: env.GONKA_BASE_URL || DEFAULT_GONKA_BASE_URL,
           models: [env.KIMI_MODEL || DEFAULT_KIMI_MODEL, env.MINIMAX_MODEL || DEFAULT_MINIMAX_MODEL],
@@ -99,7 +100,7 @@ const worker = {
           date,
           env,
         );
-        return json(signals, 200, signals.cacheLayer === "snapshot" ? "public, max-age=86400, immutable" : "no-store");
+        return json(signals, 200, signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss" ? "public, max-age=86400, immutable" : "no-store");
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
         enforceRateLimit(request);

@@ -114,6 +114,7 @@ const server = createServer(async (request, response) => {
       sendJson(response, 200, {
         ok: true,
         liveReady: Boolean(process.env.GONKA_API_KEY),
+        signalCacheReady: Boolean(process.env.SIGNAL_CACHE_BASE_URL),
         provider: "GonkaRouter",
         baseUrl: process.env.GONKA_BASE_URL || DEFAULT_GONKA_BASE_URL,
         models: [
@@ -141,7 +142,7 @@ const server = createServer(async (request, response) => {
         url.searchParams.get("date") || "",
         process.env,
       );
-      sendJson(response, 200, signals, signals.cacheLayer === "snapshot"
+      sendJson(response, 200, signals, signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss"
         ? { "Cache-Control": "public, max-age=86400, immutable" }
         : undefined);
       return;

@@ -8,6 +8,7 @@ import { parseJsonObject } from "./json.mjs";
 import { SIGNAL_AGENT_SYSTEM, topicAgentDescriptor } from "./agent-architecture.mjs";
 import { resolveSignalDate, runGlobalPublicScanSkill } from "./signal-skills.mjs";
 import { getSignalSnapshot } from "./signal-snapshot.mjs";
+import { getSignalObjectCache } from "./signal-object-cache.mjs";
 
 export const SIGNAL_TOPICS = {
   ai: {
@@ -200,6 +201,11 @@ export async function getDailySignals(topicId, rawDate = "", env = typeof proces
 
   const calendar = resolveSignalDate(rawDate, runtime.now || new Date());
   if (!runtime.skipCache) {
+    const objectCached = await getSignalObjectCache(topicId, calendar.selectedDate, env, {
+      now: runtime.now,
+      fetchImpl: runtime.fetchImpl,
+    });
+    if (objectCached) return objectCached;
     const snapshot = getSignalSnapshot(topicId, calendar.selectedDate);
     if (snapshot) return snapshot;
   }

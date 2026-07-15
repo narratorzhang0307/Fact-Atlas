@@ -103,12 +103,12 @@ export function SignalDesk({ onInvestigate }: Props) {
         setBrief(value);
         setBufferLayer("network");
       }
-      if (value.cacheLayer === "snapshot") {
+      if (value.cacheLayer === "snapshot" || value.cacheLayer === "oss") {
         for (const item of TOPICS) {
           const siblingKey = `${selectedDate}:${item.id}`;
           if (briefCache.has(siblingKey)) continue;
           void getBrief(item.id, selectedDate, controller.signal).then((sibling) => {
-            if (sibling.cacheLayer === "snapshot") {
+            if (sibling.cacheLayer === "snapshot" || sibling.cacheLayer === "oss") {
               briefCache.set(siblingKey, sibling);
               saveSignalBrief(sibling);
             }
@@ -210,8 +210,8 @@ export function SignalDesk({ onInvestigate }: Props) {
               <Sparkles size={16} />
               <p><b>{brief.brief}</b><span>{brief.briefZh}</span></p>
               <div className="signals-cache-meta">
-                <span className={brief.cacheLayer === "snapshot" ? "signals-cache-badge snapshot" : "signals-cache-badge"}>
-                  {bufferLayer === "device" ? "3-DAY DEVICE BUFFER · 三日设备缓冲" : brief.cacheLayer === "snapshot" ? "PRELOADED · 已预载" : bufferLayer === "memory" || brief.cacheHit ? "SESSION CACHE · 会话缓存" : "LIVE EDITION · 实时简报"}
+                <span className={brief.cacheLayer === "snapshot" || brief.cacheLayer === "oss" ? "signals-cache-badge snapshot" : "signals-cache-badge"}>
+                  {bufferLayer === "device" ? "3-DAY DEVICE BUFFER · 三日设备缓冲" : brief.cacheLayer === "oss" ? "ALIYUN OSS · 云端三日缓存" : brief.cacheLayer === "snapshot" ? "PRELOADED · 已预载" : bufferLayer === "memory" || brief.cacheHit ? "SESSION CACHE · 会话缓存" : "LIVE EDITION · 实时简报"}
                 </span>
                 <code title={brief.requestId || "No receipt returned"}>{brief.requestId || "No Gonka receipt · 未返回回执"}</code>
               </div>

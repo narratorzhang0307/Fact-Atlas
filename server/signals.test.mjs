@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDailySignals, normalizeSignalRanking, SIGNAL_TOPICS } from "./signals.mjs";
-import { hasSignalSnapshot } from "./signal-snapshot.mjs";
+import { getSignalSnapshot, hasSignalSnapshot } from "./signal-snapshot.mjs";
 import { resolveSignalDate, runGlobalPublicScanSkill } from "./signal-skills.mjs";
 
 const SOURCES = [
@@ -29,6 +29,18 @@ describe("signal scout", () => {
     expect(result.snapshot.signalCount).toBe(result.signals.length);
     expect(result.requestId).toMatch(/^devshard-/);
     expect(networkCalls).toBe(0);
+  });
+
+  it("prefers a validated OSS date bundle and preserves the original receipt", async () => {
+    const date = "2026-07-15";
+    const editions = Object.fromEntries(Object.keys(SIGNAL_TOPICS).map((topic) => [topic, getSignalSnapshot(topic, date)]));
+    const result = await getDailySignals("culture", date, { SIGNAL_CACHE_BASE_URL: "https://cache.example/fact-atlas/signals" }, {
+      now: new Date("2026-07-16T12:00:00.000Z"),
+      fetchImpl: async () => Response.json({ version: 1, date, editions }),
+    });
+    expect(result.cacheHit).toBe(true);
+    expect(result.cacheLayer).toBe("oss");
+    expect(result.requestId).toMatch(/^devshard-/);
   });
 
   it("returns isolated snapshot copies so request consumers cannot mutate the cache", async () => {
