@@ -113,13 +113,13 @@ function nextUtcDate(date) {
   return value.toISOString().slice(0, 10);
 }
 
-function datedQuery(query, date) {
-  return `${String(query).trim()} after:${date} before:${nextUtcDate(date)}`;
+function datedQuery(query, startDate, endDateExclusive) {
+  return `${String(query).trim()} after:${startDate} before:${endDateExclusive}`;
 }
 
-export async function searchGlobalNewsEvidence(queries, date, { limit = 12, signal, fetchImpl = fetch } = {}) {
-  const englishQuery = datedQuery(queries?.en || queries?.zh || "", date);
-  const chineseQuery = datedQuery(queries?.zh || queries?.en || "", date);
+export async function searchGlobalNewsEvidence(queries, date, { limit = 12, signal, fetchImpl = fetch, startDate = date, endDateExclusive = nextUtcDate(date) } = {}) {
+  const englishQuery = datedQuery(queries?.en || queries?.zh || "", startDate, endDateExclusive);
+  const chineseQuery = datedQuery(queries?.zh || queries?.en || "", startDate, endDateExclusive);
   if (!englishQuery.trim() || !chineseQuery.trim()) return [];
 
   const feeds = [

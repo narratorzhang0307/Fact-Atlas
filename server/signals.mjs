@@ -129,7 +129,7 @@ export function normalizeSignalRanking(raw, sources) {
   };
 }
 
-function rankingMessages(topic, sources, selectedDate) {
+function rankingMessages(topic, sources, calendar) {
   const packet = sources.map((source, index) => ({
     sourceIndex: index + 1,
     title: source.title,
@@ -145,7 +145,7 @@ function rankingMessages(topic, sources, selectedDate) {
     },
     {
       role: "user",
-      content: `TOPIC: ${topic.label} / ${topic.labelZh}\nSELECTED EDITION DATE (UTC): ${selectedDate}\nUNTRUSTED NEWS PACKET:\n${JSON.stringify(packet, null, 2)}\n\nSelect up to five diverse, consequential items for this dated edition and order them from most to least important. Prefer independent publishers, recency to the selected date, public impact, geographic diversity, and claims that can be checked. Avoid duplicate stories and sensationalism. For each item, turn the headline into one self-contained factual claim for later verification. "importance" must be an integer score from 50 to 100 (for example 82), never an ordinal rank. Return exactly {"brief":"English dated brief","briefZh":"Chinese dated brief","signals":[{"sourceIndex":1,"importance":82,"headline":"concise English headline","headlineZh":"concise Chinese headline","claim":"one checkable English claim","claimZh":"same claim in Chinese","why":"why it matters, without asserting it is true","whyZh":"Chinese explanation","locationHint":"place name only when explicitly supported; otherwise empty"}]}.`,
+      content: `TOPIC: ${topic.label} / ${topic.labelZh}\nSELECTED EDITION DATE (UTC): ${calendar.selectedDate}\nPUBLIC SOURCE WINDOW (UTC): ${calendar.coverageStart} through ${calendar.coverageEnd}\nUNTRUSTED NEWS PACKET:\n${JSON.stringify(packet, null, 2)}\n\nSelect up to five diverse, consequential items for this dated edition and order them from most to least important. Prefer independent publishers, recency to the selected date, public impact, geographic diversity, and claims that can be checked. Avoid duplicate stories and sensationalism. For each item, turn the headline into one self-contained factual claim for later verification. "importance" must be an integer score from 50 to 100 (for example 82), never an ordinal rank. Return exactly {"brief":"English dated brief","briefZh":"Chinese dated brief","signals":[{"sourceIndex":1,"importance":82,"headline":"concise English headline","headlineZh":"concise Chinese headline","claim":"one checkable English claim","claimZh":"same claim in Chinese","why":"why it matters, without asserting it is true","whyZh":"Chinese explanation","locationHint":"place name only when explicitly supported; otherwise empty"}]}.`,
     },
   ];
 }
@@ -195,7 +195,7 @@ export async function getDailySignals(topicId, rawDate = "", env = typeof proces
       apiKey: env.GONKA_API_KEY,
       baseUrl: env.GONKA_BASE_URL || DEFAULT_GONKA_BASE_URL,
       model: env.KIMI_MODEL || DEFAULT_KIMI_MODEL,
-      messages: rankingMessages(topic, sources, calendar.selectedDate),
+      messages: rankingMessages(topic, sources, calendar),
       purpose: "daily-signal-ranking",
       maxTokens: 2200,
       temperature: 0.1,

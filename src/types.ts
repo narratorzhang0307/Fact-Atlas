@@ -122,6 +122,9 @@ export interface DailySignalBrief {
     maxDate: string;
     timezone: string;
     historyDays: number;
+    coverageStart: string;
+    coverageEnd: string;
+    coverageDays: number;
   };
   agentSystem: {
     mainAgent: { id: string; name: string; responsibility: string };

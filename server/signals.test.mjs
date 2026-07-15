@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDailySignals, normalizeSignalRanking, SIGNAL_TOPICS } from "./signals.mjs";
-import { resolveSignalDate } from "./signal-skills.mjs";
+import { resolveSignalDate, runGlobalPublicScanSkill } from "./signal-skills.mjs";
 
 const SOURCES = [
   { title: "Alpha", url: "https://example.com/a", publisher: "Example A", publishedAt: "2026-07-15", origin: "Test" },
@@ -58,8 +58,29 @@ describe("signal scout", () => {
       minDate: "2026-06-16",
       maxDate: "2026-07-15",
       historyDays: 30,
+      coverageStart: "2026-06-25",
+      coverageEnd: "2026-07-01",
+      coverageDays: 7,
     });
     expect(() => resolveSignalDate("2026-06-01", new Date("2026-07-15T12:00:00.000Z"))).toThrow("between");
+  });
+
+  it("drops aggregator results outside the selected edition date before inference", async () => {
+    const result = await runGlobalPublicScanSkill(
+      SIGNAL_TOPICS.ai,
+      resolveSignalDate("2026-07-15", new Date("2026-07-15T12:00:00.000Z")),
+      {
+        searchGlobalNewsEvidence: async () => [
+          SOURCES[0],
+          { ...SOURCES[1], title: "Inside window", publishedAt: "2026-07-09T10:00:00.000Z" },
+          { ...SOURCES[1], title: "Outside window", publishedAt: "2026-07-08T10:00:00.000Z" },
+          { ...SOURCES[1], title: "Undated", publishedAt: null },
+        ],
+      },
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0].title).toBe("Alpha");
+    expect(result[1].title).toBe("Inside window");
   });
 
   it("rejects unsupported topics before network access", async () => {
