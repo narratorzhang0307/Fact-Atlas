@@ -70,15 +70,35 @@ export function SignalDesk({ onInvestigate }: Props) {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const briefCache = useRef(new Map<string, DailySignalBrief>());
 
   useEffect(() => {
     let active = true;
+    const editionKey = `${selectedDate}:${topic}`;
+    const cached = refreshKey === 0 ? briefCache.current.get(editionKey) : null;
+    if (cached) {
+      setBrief(cached);
+      setActiveSignalIndex(0);
+      setLoading(false);
+      setError("");
+      return () => { active = false; };
+    }
     setLoading(true);
     setError("");
-    setBrief(null);
+    if (refreshKey === 0) setBrief(null);
     setActiveSignalIndex(0);
     void getBrief(topic, selectedDate).then((value) => {
+      briefCache.current.set(editionKey, value);
       if (active) setBrief(value);
+      if (value.cacheLayer === "snapshot") {
+        for (const item of TOPICS) {
+          const siblingKey = `${selectedDate}:${item.id}`;
+          if (briefCache.current.has(siblingKey)) continue;
+          void getBrief(item.id, selectedDate).then((sibling) => {
+            if (sibling.cacheLayer === "snapshot") briefCache.current.set(siblingKey, sibling);
+          }).catch(() => undefined);
+        }
+      }
     }).catch((reason) => {
       if (active) setError(reason instanceof Error ? reason.message : "Signal scan failed. · 情报检索失败。");
     }).finally(() => {
@@ -115,7 +135,10 @@ export function SignalDesk({ onInvestigate }: Props) {
 
         <div className="signals-agent-grid" role="group" aria-label="Topic agents · 主题侦察员">
           {TOPICS.map((item) => (
-            <button type="button" key={item.id} className={topic === item.id ? "active" : ""} onClick={() => setTopic(item.id)} style={{ "--agent-color": item.color } as React.CSSProperties}>
+            <button type="button" key={item.id} className={topic === item.id ? "active" : ""} onClick={() => {
+              setRefreshKey(0);
+              setTopic(item.id);
+            }} style={{ "--agent-color": item.color } as React.CSSProperties}>
               <i>{item.icon}</i><span>{item.label}<small>{item.labelZh}</small></span><em>SUBAGENT</em><Bot size={15} />
             </button>
           ))}
@@ -140,7 +163,10 @@ export function SignalDesk({ onInvestigate }: Props) {
                 value={selectedDate}
                 min={brief?.calendar.minDate || utcDate(-29)}
                 max={brief?.calendar.maxDate || utcDate()}
-                onChange={(event) => setSelectedDate(event.target.value)}
+                onChange={(event) => {
+                  setRefreshKey(0);
+                  setSelectedDate(event.target.value);
+                }}
               />
               {brief ? <small>SOURCE WINDOW · 来源窗口 {brief.calendar.coverageStart} → {brief.calendar.coverageEnd}</small> : null}
             </label>
@@ -155,14 +181,21 @@ export function SignalDesk({ onInvestigate }: Props) {
             <div className="signals-brief-strip">
               <Sparkles size={16} />
               <p><b>{brief.brief}</b><span>{brief.briefZh}</span></p>
-              <code title={brief.requestId || "No receipt returned"}>{brief.requestId || "No Gonka receipt · 未返回回执"}</code>
+              <div className="signals-cache-meta">
+                <span className={brief.cacheLayer === "snapshot" ? "signals-cache-badge snapshot" : "signals-cache-badge"}>
+                  {brief.cacheLayer === "snapshot" ? "PRELOADED · 已预载" : brief.cacheHit ? "MEMORY CACHE · 内存缓存" : "LIVE EDITION · 实时简报"}
+                </span>
+                <code title={brief.requestId || "No receipt returned"}>{brief.requestId || "No Gonka receipt · 未返回回执"}</code>
+              </div>
             </div>
           ) : null}
 
-          {loading ? <div className="signals-loading signals-loading-wide"><i /><strong>Building the {selectedDate} edition…</strong><span>主题 Agent 正在抓取全球公开来源，Skills 去重后由 Gonka 排序。</span></div> : null}
-          {error ? <div className="signals-error signals-error-wide"><strong>Scout paused · 侦察已暂停</strong><span>{error}</span><button type="button" onClick={() => setRefreshKey((value) => value + 1)}>Try again · 重试</button></div> : null}
+          {loading && !brief ? <div className="signals-loading signals-loading-wide"><i /><strong>Opening the {selectedDate} edition…</strong><span>正在读取日期简报；已预载日期直接命中快照，未缓存日期才启动实时 Agent。</span></div> : null}
+          {loading && brief ? <div className="signals-refreshing"><RefreshCw size={15} />Refreshing this edition without hiding the cards · 卡片保持可见，正在更新简报</div> : null}
+          {error && !brief ? <div className="signals-error signals-error-wide"><strong>Scout paused · 侦察已暂停</strong><span>{error}</span><button type="button" onClick={() => setRefreshKey((value) => value + 1)}>Try again · 重试</button></div> : null}
+          {error && brief ? <div className="signals-refreshing">The cached edition remains available · 刷新未完成，已缓存简报仍可浏览</div> : null}
 
-          {!loading && activeSignal && brief ? (
+          {activeSignal && brief ? (
             <div className="signal-deck-stage">
               <button className="signal-deck-arrow previous" type="button" onClick={() => moveSignal(-1)} aria-label="Previous signal · 上一条"><ChevronLeft size={25} /></button>
               <div className="signal-deck-stack" data-position={`${activeSignalIndex + 1}-${signals.length}`}>
