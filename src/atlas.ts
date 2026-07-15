@@ -55,13 +55,48 @@ function isPlacement(value: unknown): value is AtlasPlacement {
     && placement.confirmedByUser === true;
 }
 
+function isHttpUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function isVerificationResult(value: unknown): value is VerificationResult {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Partial<VerificationResult>;
+  return typeof result.id === "string"
+    && typeof result.createdAt === "string"
+    && !Number.isNaN(Date.parse(result.createdAt))
+    && typeof result.claim === "string"
+    && typeof result.summary === "string"
+    && ["supported", "refuted", "mixed", "insufficient"].includes(String(result.verdict))
+    && Number.isFinite(result.truthScore)
+    && Number(result.truthScore) >= 0
+    && Number(result.truthScore) <= 100
+    && Number.isFinite(result.confidence)
+    && Number(result.confidence) >= 0
+    && Number(result.confidence) <= 100
+    && Array.isArray(result.sources)
+    && result.sources.every((source) => source && typeof source.id === "string" && typeof source.title === "string" && isHttpUrl(source.url))
+    && Array.isArray(result.models)
+    && Array.isArray(result.missingEvidence)
+    && Array.isArray(result.trace)
+    && Boolean(result.scoring && typeof result.scoring === "object");
+}
+
 function isNode(value: unknown): value is AtlasNode {
   if (!value || typeof value !== "object") return false;
   const node = value as Partial<AtlasNode>;
   return typeof node.id === "string"
     && typeof node.savedAt === "string"
+    && !Number.isNaN(Date.parse(node.savedAt))
     && (node.placement === null || isPlacement(node.placement))
-    && Boolean(node.result && typeof node.result === "object" && typeof node.result.id === "string");
+    && isVerificationResult(node.result)
+    && node.result.id === node.id;
 }
 
 export function loadAtlasNodes(storage: StorageLike | null = browserStorage()): AtlasNode[] {
@@ -92,6 +127,7 @@ export function saveAtlasNode(
   now = new Date(),
 ): AtlasNode {
   if (placement && !isPlacement(placement)) throw new Error("Invalid Atlas placement.");
+  if (!isVerificationResult(result)) throw new Error("Invalid verification result.");
   const node: AtlasNode = {
     id: result.id,
     savedAt: now.toISOString(),

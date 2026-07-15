@@ -52,6 +52,38 @@ describe("three-day Signals device buffer", () => {
     expect(loadSignalBrief("ai", "2026-07-15", storage, 1_001)).toBeNull();
   });
 
+  it("rejects unsafe links and invalid cache timestamps", () => {
+    const storage = new MemoryStorage();
+    const unsafe = brief("ai", "2026-07-15");
+    unsafe.signals = [{
+      id: "unsafe",
+      sourceIndex: 1,
+      importance: 90,
+      headline: "Headline",
+      headlineZh: "标题",
+      claim: "Claim",
+      claimZh: "主张",
+      why: "Why",
+      whyZh: "原因",
+      locationHint: "",
+      source: { title: "Source", url: "javascript:alert(1)", publisher: "Publisher", publishedAt: null, origin: "test", imageUrl: null },
+    }];
+    expect(saveSignalBrief(unsafe, storage, 1_000)).toBe(false);
+
+    storage.setItem(SIGNAL_BUFFER_STORAGE_KEY, JSON.stringify({ version: 1, editions: { "2026-07-15:ai": { savedAt: "forever", brief: brief("ai", "2026-07-15") } } }));
+    expect(loadSignalBrief("ai", "2026-07-15", storage, 1_001)).toBeNull();
+    storage.setItem(SIGNAL_BUFFER_STORAGE_KEY, JSON.stringify({ version: 1, editions: { "2026-07-15:ai": { savedAt: 999_999_999, brief: brief("ai", "2026-07-15") } } }));
+    expect(loadSignalBrief("ai", "2026-07-15", storage, 1_001)).toBeNull();
+  });
+
+  it("prunes malformed records while saving a valid edition", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(SIGNAL_BUFFER_STORAGE_KEY, JSON.stringify({ version: 1, editions: { broken: null } }));
+    expect(saveSignalBrief(brief("policy", "2026-07-15"), storage, 2_000)).toBe(true);
+    const stored = JSON.parse(storage.getItem(SIGNAL_BUFFER_STORAGE_KEY) || "null");
+    expect(Object.keys(stored.editions)).toEqual(["2026-07-15:policy"]);
+  });
+
   it("caps storage at eight topics across three daily editions", () => {
     const storage = new MemoryStorage();
     const topics: SignalTopic[] = ["ai", "technology", "finance", "climate", "science", "health", "culture", "policy"];

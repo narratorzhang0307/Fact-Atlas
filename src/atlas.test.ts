@@ -74,6 +74,18 @@ describe("Fact Atlas local model", () => {
     expect(() => saveAtlasNode(result("fr_missing"), null, null)).toThrow("Atlas storage is unavailable");
   });
 
+  it("rejects malformed or unsafe evidence snapshots from browser storage", () => {
+    const storage = new MemoryStorage();
+    const unsafe = result("fr_unsafe", "javascript:alert(1)");
+    storage.setItem(ATLAS_STORAGE_KEY, JSON.stringify([{ id: unsafe.id, savedAt: "2026-07-15T00:00:00.000Z", placement: null, result: unsafe }]));
+    expect(loadAtlasNodes(storage)).toEqual([]);
+    expect(() => saveAtlasNode(unsafe, null, storage)).toThrow("Invalid verification result");
+
+    const mismatched = result("fr_result");
+    storage.setItem(ATLAS_STORAGE_KEY, JSON.stringify([{ id: "fr_node", savedAt: "2026-07-15T00:00:00.000Z", placement: null, result: mismatched }]));
+    expect(loadAtlasNodes(storage)).toEqual([]);
+  });
+
   it("links only explainable shared evidence or nearby nodes", () => {
     const storage = new MemoryStorage();
     const a = saveAtlasNode(result("fr_a"), beijing, storage);
