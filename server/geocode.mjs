@@ -1,7 +1,7 @@
 import { GonkaError } from "./gonka.mjs";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
-const USER_AGENT = "FactRelay/0.1 (+https://github.com/narratorzhang0307/FactRelay)";
+const USER_AGENT = "FactRelay/0.1 (+https://github.com/narratorzhang0307/Fact-Atlas)";
 
 export async function geocodePlace(rawQuery, { request = fetch, signal } = {}) {
   const query = String(rawQuery || "").trim();

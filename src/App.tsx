@@ -121,7 +121,7 @@ export default function App() {
           <div className="header-meta">
             <span className="header-status" aria-label="Network status"><i className={health?.liveReady ? "pulse-dot connected" : "pulse-dot"} />{health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}</span>
             <PwaInstall />
-            <a href="https://github.com/narratorzhang0307/FactRelay" target="_blank" rel="noreferrer">
+            <a href="https://github.com/narratorzhang0307/Fact-Atlas" target="_blank" rel="noreferrer">
               <Github size={16} /> <span>GitHub</span>
             </a>
           </div>
