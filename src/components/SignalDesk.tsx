@@ -22,6 +22,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { loadSignalBrief, saveSignalBrief } from "../signal-cache";
 import type { ApiError, DailySignal, DailySignalBrief, SignalTopic } from "../types";
 
 interface Props {
@@ -71,33 +72,46 @@ export function SignalDesk({ onInvestigate }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [bufferLayer, setBufferLayer] = useState<"memory" | "device" | "network" | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
     const editionKey = `${selectedDate}:${topic}`;
-    const cached = refreshKey === 0 ? briefCache.get(editionKey) : null;
+    const memoryCached = refreshKey === 0 ? briefCache.get(editionKey) : null;
+    const deviceCached = refreshKey === 0 && !memoryCached ? loadSignalBrief(topic, selectedDate) : null;
+    const cached = memoryCached || deviceCached;
     if (cached) {
+      briefCache.set(editionKey, cached);
       setBrief(cached);
       setActiveSignalIndex(0);
       setLoading(false);
       setError("");
+      setBufferLayer(memoryCached ? "memory" : "device");
       return () => { active = false; };
     }
     setLoading(true);
     setError("");
+    setBufferLayer(null);
     if (refreshKey === 0) setBrief(null);
     setActiveSignalIndex(0);
     void getBrief(topic, selectedDate, controller.signal).then((value) => {
       briefCache.set(editionKey, value);
-      if (active) setBrief(value);
+      saveSignalBrief(value);
+      if (active) {
+        setBrief(value);
+        setBufferLayer("network");
+      }
       if (value.cacheLayer === "snapshot") {
         for (const item of TOPICS) {
           const siblingKey = `${selectedDate}:${item.id}`;
           if (briefCache.has(siblingKey)) continue;
           void getBrief(item.id, selectedDate, controller.signal).then((sibling) => {
-            if (sibling.cacheLayer === "snapshot") briefCache.set(siblingKey, sibling);
+            if (sibling.cacheLayer === "snapshot") {
+              briefCache.set(siblingKey, sibling);
+              saveSignalBrief(sibling);
+            }
           }).catch(() => undefined);
         }
       }
@@ -197,7 +211,7 @@ export function SignalDesk({ onInvestigate }: Props) {
               <p><b>{brief.brief}</b><span>{brief.briefZh}</span></p>
               <div className="signals-cache-meta">
                 <span className={brief.cacheLayer === "snapshot" ? "signals-cache-badge snapshot" : "signals-cache-badge"}>
-                  {brief.cacheLayer === "snapshot" ? "PRELOADED · 已预载" : brief.cacheHit ? "MEMORY CACHE · 内存缓存" : "LIVE EDITION · 实时简报"}
+                  {bufferLayer === "device" ? "3-DAY DEVICE BUFFER · 三日设备缓冲" : brief.cacheLayer === "snapshot" ? "PRELOADED · 已预载" : bufferLayer === "memory" || brief.cacheHit ? "SESSION CACHE · 会话缓存" : "LIVE EDITION · 实时简报"}
                 </span>
                 <code title={brief.requestId || "No receipt returned"}>{brief.requestId || "No Gonka receipt · 未返回回执"}</code>
               </div>

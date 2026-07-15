@@ -1,60 +1,84 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const TOPICS = ["ai", "technology", "finance", "climate", "science", "health", "culture", "policy"];
 const REQUIRED_SIGNAL_TEXT = ["headline", "headlineZh", "claim", "claimZh", "why", "whyZh"];
 
-const [date, rawInputDir, rawOutputFile] = process.argv.slice(2);
-if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !rawInputDir || !rawOutputFile) {
-  throw new Error("Usage: node scripts/build-signal-snapshot.mjs YYYY-MM-DD INPUT_DIR OUTPUT_FILE");
+const args = process.argv.slice(2);
+let rawOutputFile;
+let dateInputs;
+
+if (args[0] === "--root") {
+  const [, rawInputRoot, outputFile] = args;
+  if (!rawInputRoot || !outputFile) {
+    throw new Error("Usage: node scripts/build-signal-snapshot.mjs --root INPUT_ROOT OUTPUT_FILE");
+  }
+  const inputRoot = resolve(rawInputRoot);
+  rawOutputFile = outputFile;
+  dateInputs = readdirSync(inputRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(entry.name))
+    .map((entry) => ({ date: entry.name, inputDir: resolve(inputRoot, entry.name) }))
+    .sort((left, right) => left.date.localeCompare(right.date));
+  if (!dateInputs.length) throw new Error(`No YYYY-MM-DD snapshot directories found in ${inputRoot}`);
+} else {
+  const [date, rawInputDir, outputFile] = args;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !rawInputDir || !outputFile) {
+    throw new Error("Usage: node scripts/build-signal-snapshot.mjs YYYY-MM-DD INPUT_DIR OUTPUT_FILE");
+  }
+  rawOutputFile = outputFile;
+  dateInputs = [{ date, inputDir: resolve(rawInputDir) }];
 }
 
-const inputDir = resolve(rawInputDir);
 const outputFile = resolve(rawOutputFile);
-const editions = {};
+const editionsByDate = {};
 
-for (const topic of TOPICS) {
-  const sourceFile = resolve(inputDir, `${topic}.json`);
-  const sourceText = readFileSync(sourceFile, "utf8");
-  const edition = JSON.parse(sourceText);
-  const issues = [];
+for (const { date, inputDir } of dateInputs) {
+  const editions = {};
+  for (const topic of TOPICS) {
+    const sourceFile = resolve(inputDir, `${topic}.json`);
+    const sourceText = readFileSync(sourceFile, "utf8");
+    const edition = JSON.parse(sourceText);
+    const issues = [];
 
-  if (edition.mode !== "live") issues.push("mode must be live");
-  if (edition.topic !== topic) issues.push(`topic must be ${topic}`);
-  if (edition.calendar?.selectedDate !== date) issues.push(`selected date must be ${date}`);
-  if (!edition.requestId) issues.push("Gonka requestId is missing");
-  if (!edition.trace?.some((step) => step.provider === "GonkaRouter" && step.status === "complete")) {
-    issues.push("a complete GonkaRouter trace step is required");
-  }
-  if (!Array.isArray(edition.signals) || edition.signals.length < 1 || edition.signals.length > 5) {
-    issues.push("signals must contain between one and five cards");
-  }
-  for (const [index, signal] of (edition.signals || []).entries()) {
-    for (const field of REQUIRED_SIGNAL_TEXT) {
-      if (!signal?.[field]) issues.push(`signal ${index + 1} is missing ${field}`);
+    if (edition.mode !== "live") issues.push("mode must be live");
+    if (edition.topic !== topic) issues.push(`topic must be ${topic}`);
+    if (edition.calendar?.selectedDate !== date) issues.push(`selected date must be ${date}`);
+    if (!edition.requestId) issues.push("Gonka requestId is missing");
+    if (!edition.trace?.some((step) => step.provider === "GonkaRouter" && step.status === "complete")) {
+      issues.push("a complete GonkaRouter trace step is required");
     }
-    if (!signal?.source?.url) issues.push(`signal ${index + 1} is missing a source URL`);
-  }
-  if (issues.length) throw new Error(`${sourceFile}:\n- ${issues.join("\n- ")}`);
+    if (!Array.isArray(edition.signals) || edition.signals.length < 1 || edition.signals.length > 5) {
+      issues.push("signals must contain between one and five cards");
+    }
+    for (const [index, signal] of (edition.signals || []).entries()) {
+      for (const field of REQUIRED_SIGNAL_TEXT) {
+        if (!signal?.[field]) issues.push(`signal ${index + 1} is missing ${field}`);
+      }
+      if (!signal?.source?.url) issues.push(`signal ${index + 1} is missing a source URL`);
+    }
+    if (issues.length) throw new Error(`${sourceFile}:\n- ${issues.join("\n- ")}`);
 
-  const contentHash = createHash("sha256").update(sourceText).digest("hex");
-  editions[topic] = {
-    ...edition,
-    cacheHit: true,
-    cacheLayer: "snapshot",
-    snapshot: {
-      selectedDate: date,
-      generatedAt: edition.generatedAt,
-      contentHash,
-      signalCount: edition.signals.length,
-    },
-  };
+    const contentHash = createHash("sha256").update(sourceText).digest("hex");
+    editions[topic] = {
+      ...edition,
+      cacheHit: true,
+      cacheLayer: "snapshot",
+      snapshot: {
+        selectedDate: date,
+        generatedAt: edition.generatedAt,
+        contentHash,
+        signalCount: edition.signals.length,
+      },
+    };
+  }
+  editionsByDate[date] = editions;
 }
 
+const dates = Object.keys(editionsByDate);
 const moduleSource = `// Generated by scripts/build-signal-snapshot.mjs. Do not edit by hand.\n`
-  + `export const SIGNAL_SNAPSHOT_DATES = Object.freeze(${JSON.stringify([date])});\n`
-  + `const EDITIONS = ${JSON.stringify({ [date]: editions }, null, 2)};\n\n`
+  + `export const SIGNAL_SNAPSHOT_DATES = Object.freeze(${JSON.stringify(dates)});\n`
+  + `const EDITIONS = ${JSON.stringify(editionsByDate, null, 2)};\n\n`
   + `export function getSignalSnapshot(topic, date) {\n`
   + `  const edition = EDITIONS[date]?.[topic];\n`
   + `  return edition ? structuredClone(edition) : null;\n`
@@ -64,4 +88,4 @@ const moduleSource = `// Generated by scripts/build-signal-snapshot.mjs. Do not 
   + `}\n`;
 
 writeFileSync(outputFile, moduleSource);
-console.log(`Wrote ${TOPICS.length} validated signal editions for ${date} to ${outputFile}`);
+console.log(`Wrote ${TOPICS.length * dates.length} validated signal editions across ${dates.length} dates to ${outputFile}`);

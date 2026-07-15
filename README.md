@@ -476,6 +476,14 @@ Signals 解决的是个人知识库的“发现入口”：用户不必先知道
 dated snapshot → process memory → live public scan + Gonka ranking
 ```
 
+浏览器端还有一层独立的三日缓冲：
+
+```text
+session memory → 72-hour device buffer → Signals API
+```
+
+设备缓冲最多保留 24 份日期主题简报，刚好对应三天 × 八个主题。它使用每份简报原始的 Gonka Request ID、来源与日期，超过 72 小时自动失效；缓冲未命中时才请求服务端。
+
 快照并不绕过推理。它保存的是某次已经完成的真实 Gonka 排序结果，包括：
 
 - 原始来源和双语卡片字段；
@@ -485,7 +493,7 @@ dated snapshot → process memory → live public scan + Gonka ranking
 
 编译器会拒绝缺少回执、来源 URL、双语字段、完成态 trace 或日期/主题不匹配的版次。
 
-当前仓库内置 `2026-07-15` UTC 版次，共八个主题、37 张双语候选卡。首次获取一个主题后，前端会在后台预取同日其余七个主题，后续切换保持即时响应。详见 [`docs/SIGNALS.md`](docs/SIGNALS.md)。
+当前仓库内置 `2026-07-15` UTC 版次，共八个主题、37 张双语候选卡。多日编译器可以一次校验并打包最近三天的 24 份真实版次；只有保留完整 Gonka 回执的日期目录才能进入预载层。首次获取一个主题后，前端会在后台预取同日其余七个主题，并写入三日设备缓冲。详见 [`docs/SIGNALS.md`](docs/SIGNALS.md)。
 
 ## Atlas：私人知识库与空间组织层
 
@@ -646,6 +654,7 @@ npm audit --audit-level=low
 ├── src/
 │   ├── App.tsx                     # Relay / Atlas / Signals 三 Tab 产品壳
 │   ├── atlas.ts                    # 浏览器本地事实节点、订阅与关系模型
+│   ├── signal-cache.ts             # 72 小时、24 版次的 Signals 设备缓冲
 │   └── components/
 │       ├── ClaimComposer.tsx       # 文字 / URL / 图片输入
 │       ├── EvidenceCouncil.tsx     # 证据、调查、质疑、裁决与回执
