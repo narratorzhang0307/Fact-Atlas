@@ -39,14 +39,16 @@ const TOPICS: Array<{ id: SignalTopic; label: string; labelZh: string; icon: Rea
   { id: "policy", label: "Policy & Society", labelZh: "政策社会", icon: <Scale size={19} />, color: "#b8d2ff" },
 ];
 
+const briefCache = new Map<string, DailySignalBrief>();
+
 function utcDate(offset = 0): string {
   const value = new Date();
   value.setUTCDate(value.getUTCDate() + offset);
   return value.toISOString().slice(0, 10);
 }
 
-async function getBrief(topic: SignalTopic, date: string): Promise<DailySignalBrief> {
-  const response = await fetch(`/api/signals?topic=${topic}&date=${encodeURIComponent(date)}`);
+async function getBrief(topic: SignalTopic, date: string, signal?: AbortSignal): Promise<DailySignalBrief> {
+  const response = await fetch(`/api/signals?topic=${topic}&date=${encodeURIComponent(date)}`, { signal });
   const payload = await response.json();
   if (!response.ok) {
     const error = payload as ApiError;
@@ -70,12 +72,12 @@ export function SignalDesk({ onInvestigate }: Props) {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const touchStartX = useRef<number | null>(null);
-  const briefCache = useRef(new Map<string, DailySignalBrief>());
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     const editionKey = `${selectedDate}:${topic}`;
-    const cached = refreshKey === 0 ? briefCache.current.get(editionKey) : null;
+    const cached = refreshKey === 0 ? briefCache.get(editionKey) : null;
     if (cached) {
       setBrief(cached);
       setActiveSignalIndex(0);
@@ -87,24 +89,28 @@ export function SignalDesk({ onInvestigate }: Props) {
     setError("");
     if (refreshKey === 0) setBrief(null);
     setActiveSignalIndex(0);
-    void getBrief(topic, selectedDate).then((value) => {
-      briefCache.current.set(editionKey, value);
+    void getBrief(topic, selectedDate, controller.signal).then((value) => {
+      briefCache.set(editionKey, value);
       if (active) setBrief(value);
       if (value.cacheLayer === "snapshot") {
         for (const item of TOPICS) {
           const siblingKey = `${selectedDate}:${item.id}`;
-          if (briefCache.current.has(siblingKey)) continue;
-          void getBrief(item.id, selectedDate).then((sibling) => {
-            if (sibling.cacheLayer === "snapshot") briefCache.current.set(siblingKey, sibling);
+          if (briefCache.has(siblingKey)) continue;
+          void getBrief(item.id, selectedDate, controller.signal).then((sibling) => {
+            if (sibling.cacheLayer === "snapshot") briefCache.set(siblingKey, sibling);
           }).catch(() => undefined);
         }
       }
     }).catch((reason) => {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
       if (active) setError(reason instanceof Error ? reason.message : "Signal scan failed. · 情报检索失败。");
     }).finally(() => {
       if (active) setLoading(false);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [topic, selectedDate, refreshKey]);
 
   const signals = brief?.signals || [];
@@ -202,6 +208,7 @@ export function SignalDesk({ onInvestigate }: Props) {
           {loading && brief ? <div className="signals-refreshing"><RefreshCw size={15} />Refreshing this edition without hiding the cards · 卡片保持可见，正在更新简报</div> : null}
           {error && !brief ? <div className="signals-error signals-error-wide"><strong>Scout paused · 侦察已暂停</strong><span>{error}</span><button type="button" onClick={() => setRefreshKey((value) => value + 1)}>Try again · 重试</button></div> : null}
           {error && brief ? <div className="signals-refreshing">The cached edition remains available · 刷新未完成，已缓存简报仍可浏览</div> : null}
+          {brief && !loading && !error && signals.length === 0 ? <div className="signals-empty"><RadioTower size={24} /><strong>No qualified signals for this edition. · 当日暂无合格信号</strong><span>Try another topic or date; the Agent will not invent a card to fill the feed. · 请切换主题或日期，Agent 不会为了填充信息流而虚构内容。</span></div> : null}
 
           {activeSignal && brief ? (
             <div className="signal-deck-stage">
