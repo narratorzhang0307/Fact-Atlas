@@ -6,6 +6,7 @@ import { FactAtlas } from "./components/FactAtlas";
 import { SignalDesk } from "./components/SignalDesk";
 import { EvidenceCouncil } from "./components/EvidenceCouncil";
 import { PwaInstall } from "./components/PwaInstall";
+import { AgentOrchestration } from "./components/AgentOrchestration";
 import type { ApiError, HealthStatus, InputKind, VerificationResult } from "./types";
 
 async function getJson<T>(response: Response): Promise<T> {
@@ -225,6 +226,8 @@ export default function App() {
             <span>Kimi-K2.6 × MiniMax-M2.7</span>
             <span>{health?.liveReady ? "Real request IDs · 真实回执" : "Add a Gonka key · 待接入密钥"}</span>
           </div>
+
+          <AgentOrchestration system={result?.agentSystem} />
 
           <section className="workspace" aria-label="Fact checking workspace">
             <aside>

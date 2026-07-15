@@ -55,6 +55,12 @@ export interface TraceStep {
   status: "complete" | "partial" | "preview";
 }
 
+export interface RelayAgentSystem {
+  mainAgent: { id: string; name: string; responsibility: string };
+  subagents: Array<{ id: string; name: string; role: string }>;
+  skills: Array<{ id: string; name: string; kind: string }>;
+}
+
 export interface VerificationResult {
   id: string;
   createdAt: string;
@@ -65,6 +71,7 @@ export interface VerificationResult {
   truthScore: number;
   confidence: number;
   summary: string;
+  agentSystem?: RelayAgentSystem;
   scoring: {
     modelConsensus: number;
     evidenceBalance: number;

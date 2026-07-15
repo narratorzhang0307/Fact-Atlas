@@ -1,3 +1,5 @@
+import { RELAY_AGENT_SYSTEM } from "./agent-architecture.mjs";
+
 export const DEMO_RESULT = {
   id: "preview_great_wall",
   createdAt: "2026-07-15T08:00:00.000Z",
@@ -9,6 +11,7 @@ export const DEMO_RESULT = {
   confidence: 93,
   summary:
     "The claim is refuted. Astronaut observations and space-imaging references agree that the Great Wall is generally not visible from the Moon unaided and is difficult to distinguish even from low Earth orbit. · 该主张不成立。宇航员观察与太空影像资料一致表明，人类通常无法从月球上肉眼看到长城，即使在近地轨道也很难辨认。",
+  agentSystem: RELAY_AGENT_SYSTEM,
   scoring: {
     modelConsensus: 4,
     evidenceBalance: 8,

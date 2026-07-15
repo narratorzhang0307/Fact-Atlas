@@ -19,6 +19,7 @@ import {
   skepticMessages,
 } from "./prompts.mjs";
 import { calculateTruthScore } from "./scoring.mjs";
+import { RELAY_AGENT_SYSTEM } from "./agent-architecture.mjs";
 
 const INPUT_KINDS = new Set(["text", "url", "image"]);
 const STANCE_VALUE = { support: 1, refute: -1, context: 0 };
@@ -169,12 +170,12 @@ export async function verifyClaim(
     let newsSources = [];
     let retrievalStatus = "complete";
     try {
-      newsSources = await searchNewsEvidence(claim, { limit: 6, signal: controller.signal });
+      newsSources = await (runtime.searchNewsEvidence || searchNewsEvidence)(claim, { limit: 6, signal: controller.signal });
     } catch {
       retrievalStatus = "partial";
     }
     const curatedSettled = await Promise.allSettled(
-      curatedEvidenceUrls(claim).map((url) => fetchUrlEvidence(url, {
+      curatedEvidenceUrls(claim).map((url) => (runtime.fetchUrlEvidence || fetchUrlEvidence)(url, {
         signal: controller.signal,
         resolveHost: runtime.resolveHost,
       })),
@@ -236,6 +237,7 @@ export async function verifyClaim(
       truthScore: scored.truthScore,
       confidence: scored.confidence,
       summary: skeptic.summary,
+      agentSystem: RELAY_AGENT_SYSTEM,
       scoring: scored.breakdown,
       sources: assessedSources,
       models: [
