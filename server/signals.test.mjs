@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDailySignals, normalizeSignalRanking, SIGNAL_TOPICS } from "./signals.mjs";
+import { hasSignalSnapshot } from "./signal-snapshot.mjs";
 import { resolveSignalDate, runGlobalPublicScanSkill } from "./signal-skills.mjs";
 
 const SOURCES = [
@@ -10,6 +11,32 @@ const SOURCES = [
 describe("signal scout", () => {
   it("exposes bounded public-interest topic agents", () => {
     expect(Object.keys(SIGNAL_TOPICS)).toEqual(["ai", "technology", "finance", "climate", "science", "health", "culture", "policy"]);
+  });
+
+  it("serves a validated dated snapshot without network or runtime credentials", async () => {
+    let networkCalls = 0;
+    const result = await getDailySignals("technology", "2026-07-15", {}, {
+      now: new Date("2026-07-15T12:00:00.000Z"),
+      searchNewsEvidence: async () => {
+        networkCalls += 1;
+        return SOURCES;
+      },
+    });
+
+    expect(hasSignalSnapshot("technology", "2026-07-15")).toBe(true);
+    expect(result.cacheHit).toBe(true);
+    expect(result.cacheLayer).toBe("snapshot");
+    expect(result.snapshot.signalCount).toBe(result.signals.length);
+    expect(result.requestId).toMatch(/^devshard-/);
+    expect(networkCalls).toBe(0);
+  });
+
+  it("returns isolated snapshot copies so request consumers cannot mutate the cache", async () => {
+    const first = await getDailySignals("ai", "2026-07-15", {}, { now: new Date("2026-07-15T12:00:00.000Z") });
+    const originalHeadline = first.signals[0].headline;
+    first.signals[0].headline = "mutated";
+    const second = await getDailySignals("ai", "2026-07-15", {}, { now: new Date("2026-07-15T12:00:00.000Z") });
+    expect(second.signals[0].headline).toBe(originalHeadline);
   });
 
   it("rejects invented and duplicate source indexes", () => {

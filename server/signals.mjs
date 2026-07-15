@@ -7,6 +7,7 @@ import {
 import { parseJsonObject } from "./json.mjs";
 import { SIGNAL_AGENT_SYSTEM, topicAgentDescriptor } from "./agent-architecture.mjs";
 import { resolveSignalDate, runGlobalPublicScanSkill } from "./signal-skills.mjs";
+import { getSignalSnapshot } from "./signal-snapshot.mjs";
 
 export const SIGNAL_TOPICS = {
   ai: {
@@ -196,11 +197,16 @@ async function callRankingJson(options, request, trace) {
 export async function getDailySignals(topicId, rawDate = "", env = typeof process === "undefined" ? {} : process.env, runtime = {}) {
   const topic = SIGNAL_TOPICS[topicId];
   if (!topic) throw new GonkaError("Unsupported signal topic.", { status: 400, code: "INVALID_TOPIC" });
-  if (!env.GONKA_API_KEY) throw new GonkaError("Live signal ranking needs a GonkaRouter API key.", { status: 503, code: "GONKA_API_KEY_MISSING" });
 
   const calendar = resolveSignalDate(rawDate, runtime.now || new Date());
+  if (!runtime.skipCache) {
+    const snapshot = getSignalSnapshot(topicId, calendar.selectedDate);
+    if (snapshot) return snapshot;
+  }
+  if (!env.GONKA_API_KEY) throw new GonkaError("Live signal ranking needs a GonkaRouter API key.", { status: 503, code: "GONKA_API_KEY_MISSING" });
+
   const cacheKey = `${calendar.selectedDate}:${topicId}:${env.KIMI_MODEL || DEFAULT_KIMI_MODEL}`;
-  if (!runtime.skipCache && DAILY_CACHE.has(cacheKey)) return { ...DAILY_CACHE.get(cacheKey), cacheHit: true };
+  if (!runtime.skipCache && DAILY_CACHE.has(cacheKey)) return { ...DAILY_CACHE.get(cacheKey), cacheHit: true, cacheLayer: "memory" };
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90_000);
@@ -244,6 +250,7 @@ export async function getDailySignals(topicId, rawDate = "", env = typeof proces
       requestId: ranking.call.requestId,
       trace,
       cacheHit: false,
+      cacheLayer: "runtime",
       ...normalized,
     };
     if (!runtime.skipCache) DAILY_CACHE.set(cacheKey, response);

@@ -141,6 +141,13 @@ export interface DailySignalBrief {
   model: string;
   requestId: string | null;
   cacheHit: boolean;
+  cacheLayer?: "snapshot" | "memory" | "runtime";
+  snapshot?: {
+    selectedDate: string;
+    generatedAt: string;
+    contentHash: string;
+    signalCount: number;
+  };
   brief: string;
   briefZh: string;
   signals: DailySignal[];

@@ -8,6 +8,7 @@ import {
 import { verifyClaim } from "../server/verify.mjs";
 import { geocodePlace } from "../server/geocode.mjs";
 import { getDailySignals } from "../server/signals.mjs";
+import { hasSignalSnapshot } from "../server/signal-snapshot.mjs";
 import { getMapboxConfig } from "../server/map-config.mjs";
 
 const MAX_BODY_BYTES = 7_500_000;
@@ -15,10 +16,10 @@ const WINDOW_MS = 10 * 60 * 1000;
 const MAX_RUNS_PER_WINDOW = 6;
 const requestWindows = new Map();
 
-function json(body, status = 200) {
+function json(body, status = 200, cacheControl = "no-store") {
   return Response.json(body, {
     status,
-    headers: { "Cache-Control": "no-store" },
+    headers: { "Cache-Control": cacheControl },
   });
 }
 
@@ -90,12 +91,15 @@ const worker = {
       }
       if (request.method === "GET" && url.pathname === "/api/map-config") return json(getMapboxConfig(env));
       if (request.method === "GET" && url.pathname === "/api/signals") {
-        enforceRateLimit(request);
-        return json(await getDailySignals(
-          url.searchParams.get("topic") || "ai",
-          url.searchParams.get("date") || "",
+        const topic = url.searchParams.get("topic") || "ai";
+        const date = url.searchParams.get("date") || new Date().toISOString().slice(0, 10);
+        if (!hasSignalSnapshot(topic, date)) enforceRateLimit(request);
+        const signals = await getDailySignals(
+          topic,
+          date,
           env,
-        ));
+        );
+        return json(signals, 200, signals.cacheLayer === "snapshot" ? "public, max-age=86400, immutable" : "no-store");
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
         enforceRateLimit(request);

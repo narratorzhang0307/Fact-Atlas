@@ -41,12 +41,13 @@ function loadEnvFile(path) {
 loadEnvFile(resolve(ROOT, ".env"));
 loadEnvFile(resolve(ROOT, ".env.local"));
 
-function sendJson(response, status, body) {
+function sendJson(response, status, body, headers = {}) {
   const payload = JSON.stringify(body);
   response.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(payload),
     "Cache-Control": "no-store",
+    ...headers,
   });
   response.end(payload);
 }
@@ -135,11 +136,14 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (request.method === "GET" && url.pathname === "/api/signals") {
-      sendJson(response, 200, await getDailySignals(
+      const signals = await getDailySignals(
         url.searchParams.get("topic") || "ai",
         url.searchParams.get("date") || "",
         process.env,
-      ));
+      );
+      sendJson(response, 200, signals, signals.cacheLayer === "snapshot"
+        ? { "Cache-Control": "public, max-age=86400, immutable" }
+        : undefined);
       return;
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {
