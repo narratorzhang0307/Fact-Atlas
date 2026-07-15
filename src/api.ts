@@ -20,6 +20,10 @@ function apiErrorFrom(payload: unknown): ApiError["error"] | undefined {
   return error && typeof error === "object" ? error : undefined;
 }
 
+function readableDetails(details: unknown): string {
+  return typeof details === "string" ? details.trim() : "";
+}
+
 export async function readJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   let payload: unknown = null;
@@ -39,7 +43,7 @@ export async function readJsonResponse<T>(response: Response): Promise<T> {
       error?.code || "REQUEST_FAILED",
       error?.message || `Request failed with ${response.status}. · 请求失败（${response.status}）`,
       response.status,
-      error?.details || "",
+      readableDetails(error?.details),
     );
   }
   if (payload === null) {

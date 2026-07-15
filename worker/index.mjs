@@ -1,8 +1,5 @@
 import { DEMO_RESULT } from "../server/demo.mjs";
 import {
-  DEFAULT_GONKA_BASE_URL,
-  DEFAULT_KIMI_MODEL,
-  DEFAULT_MINIMAX_MODEL,
   GonkaError,
 } from "../server/gonka.mjs";
 import { verifyClaim } from "../server/verify.mjs";
@@ -10,6 +7,7 @@ import { geocodePlace } from "../server/geocode.mjs";
 import { getDailySignals } from "../server/signals.mjs";
 import { getMapboxConfig } from "../server/map-config.mjs";
 import { createFixedWindowLimiter } from "../server/rate-limit.mjs";
+import { buildRuntimeHealth, normalizeApiError, signalResponseMetadata } from "../server/runtime-contract.mjs";
 
 const MAX_BODY_BYTES = 7_500_000;
 const inferenceLimiter = createFixedWindowLimiter();
@@ -63,14 +61,7 @@ const worker = {
     const url = new URL(request.url);
     try {
       if (request.method === "GET" && url.pathname === "/api/health") {
-        return json({
-          ok: true,
-          liveReady: Boolean(env.GONKA_API_KEY),
-          signalCacheReady: Boolean(env.SIGNAL_CACHE_BASE_URL),
-          provider: "GonkaRouter",
-          baseUrl: env.GONKA_BASE_URL || DEFAULT_GONKA_BASE_URL,
-          models: [env.KIMI_MODEL || DEFAULT_KIMI_MODEL, env.MINIMAX_MODEL || DEFAULT_MINIMAX_MODEL],
-        });
+        return json(buildRuntimeHealth(env));
       }
       if (request.method === "GET" && url.pathname === "/api/demo") return json(DEMO_RESULT);
       if (request.method === "GET" && url.pathname === "/api/geocode") {
@@ -86,11 +77,12 @@ const worker = {
           env,
           { beforeLive: () => enforceRateLimit(request) },
         );
+        const metadata = signalResponseMetadata(signals);
         return json(
           signals,
           200,
-          signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss" ? "public, max-age=86400, immutable" : "no-store",
-          { "X-Fact-Atlas-Cache": signals.cacheLayer || "runtime", "X-Fact-Atlas-Edition": signals.calendar.selectedDate },
+          metadata.cacheControl,
+          metadata.headers,
         );
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
@@ -102,14 +94,8 @@ const worker = {
       }
       return serveApp(request, env);
     } catch (error) {
-      const status = Number(error?.status) || 500;
-      return json({
-        error: {
-          code: error?.code || "INTERNAL_ERROR",
-          message: status >= 500 && !(error instanceof GonkaError) ? "Unexpected server error." : error.message,
-          ...(error?.details ? { details: error.details } : {}),
-        },
-      }, status, "no-store", status === 429 ? { "Retry-After": String(error?.details?.retryAfterSeconds || 60) } : undefined);
+      const normalized = normalizeApiError(error);
+      return json(normalized.body, normalized.status, "no-store", normalized.headers);
     }
   },
 };

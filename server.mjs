@@ -6,9 +6,6 @@ import { basename, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEMO_RESULT } from "./server/demo.mjs";
 import {
-  DEFAULT_GONKA_BASE_URL,
-  DEFAULT_KIMI_MODEL,
-  DEFAULT_MINIMAX_MODEL,
   GonkaError,
 } from "./server/gonka.mjs";
 import { verifyClaim } from "./server/verify.mjs";
@@ -16,6 +13,7 @@ import { geocodePlace } from "./server/geocode.mjs";
 import { getDailySignals } from "./server/signals.mjs";
 import { getMapboxConfig } from "./server/map-config.mjs";
 import { createFixedWindowLimiter } from "./server/rate-limit.mjs";
+import { buildRuntimeHealth, normalizeApiError, signalResponseMetadata } from "./server/runtime-contract.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST_ROOT = resolve(ROOT, "dist");
@@ -120,17 +118,7 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url, "http://localhost");
   try {
     if (request.method === "GET" && url.pathname === "/api/health") {
-      sendJson(response, 200, {
-        ok: true,
-        liveReady: Boolean(process.env.GONKA_API_KEY),
-        signalCacheReady: Boolean(process.env.SIGNAL_CACHE_BASE_URL),
-        provider: "GonkaRouter",
-        baseUrl: process.env.GONKA_BASE_URL || DEFAULT_GONKA_BASE_URL,
-        models: [
-          process.env.KIMI_MODEL || DEFAULT_KIMI_MODEL,
-          process.env.MINIMAX_MODEL || DEFAULT_MINIMAX_MODEL,
-        ],
-      });
+      sendJson(response, 200, buildRuntimeHealth(process.env));
       return;
     }
     if (request.method === "GET" && url.pathname === "/api/demo") {
@@ -152,12 +140,10 @@ const server = createServer(async (request, response) => {
         process.env,
         { beforeLive: () => inferenceLimiter.check(clientKey(request)) },
       );
+      const metadata = signalResponseMetadata(signals);
       sendJson(response, 200, signals, {
-        ...(signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss"
-          ? { "Cache-Control": "public, max-age=86400, immutable" }
-          : {}),
-        "X-Fact-Atlas-Cache": signals.cacheLayer || "runtime",
-        "X-Fact-Atlas-Edition": signals.calendar.selectedDate,
+        "Cache-Control": metadata.cacheControl,
+        ...metadata.headers,
       });
       return;
     }
@@ -179,14 +165,8 @@ const server = createServer(async (request, response) => {
       if (error) sendJson(response, 500, { error: { code: "VITE_ERROR", message: error.message } });
     });
   } catch (error) {
-    const status = Number(error?.status) || 500;
-    sendJson(response, status, {
-      error: {
-        code: error?.code || "INTERNAL_ERROR",
-        message: status >= 500 && !(error instanceof GonkaError) ? "Unexpected server error." : error.message,
-        ...(error?.details ? { details: error.details } : {}),
-      },
-    }, status === 429 ? { "Retry-After": String(error?.details?.retryAfterSeconds || 60) } : undefined);
+    const normalized = normalizeApiError(error);
+    sendJson(response, normalized.status, normalized.body, normalized.headers);
   }
 });
 
