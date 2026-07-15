@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Github, Network, Radio, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Github, Globe2, Network, Radio, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ClaimComposer } from "./components/ClaimComposer";
 import { ResultView } from "./components/ResultView";
+import { FactAtlas } from "./components/FactAtlas";
 import type { ApiError, HealthStatus, InputKind, VerificationResult } from "./types";
 
 async function getJson<T>(response: Response): Promise<T> {
@@ -110,6 +111,7 @@ export default function App() {
           </div>
           <div className="header-meta">
             <span><ShieldCheck size={15} /> Auditable by design · 可审计设计</span>
+            <a href="#atlas"><Globe2 size={16} /> <span>Fact Atlas · 事实星图</span></a>
             <a href="https://github.com/narratorzhang0307/FactRelay" target="_blank" rel="noreferrer">
               <Github size={16} /> <span>GitHub</span>
             </a>
@@ -131,6 +133,7 @@ export default function App() {
                 <span># live evidence · 实时证据</span>
                 <span># two-model review · 双模型审查</span>
                 <span># request IDs · 推理回执</span>
+                <span># private fact atlas · 私人事实星图</span>
               </div>
             </div>
 
@@ -249,6 +252,14 @@ export default function App() {
               {!loading && result && <ResultView result={result} />}
             </div>
           </section>
+
+          <FactAtlas
+            currentResult={result}
+            onOpenResult={(atlasResult) => {
+              setResult(atlasResult);
+              window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+            }}
+          />
         </main>
 
         <footer>
