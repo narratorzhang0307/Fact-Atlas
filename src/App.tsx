@@ -7,6 +7,7 @@ import { SignalDesk } from "./components/SignalDesk";
 import { EvidenceCouncil } from "./components/EvidenceCouncil";
 import { PwaInstall } from "./components/PwaInstall";
 import { AgentOrchestration } from "./components/AgentOrchestration";
+import { formatProductHash, parseProductHash, type ProductLocation, type ProductView, type RelayPane } from "./navigation";
 import type { ApiError, HealthStatus, InputKind, VerificationResult } from "./types";
 
 async function getJson<T>(response: Response): Promise<T> {
@@ -48,8 +49,6 @@ const HERO_BLOCKS = [
   },
 ] as const;
 
-type ProductView = "relay" | "atlas" | "signals";
-
 const PRODUCT_VIEWS: Array<{ id: ProductView; label: string; labelZh: string; Icon: LucideIcon }> = [
   { id: "relay", label: "Relay", labelZh: "探索", Icon: FileSearch },
   { id: "atlas", label: "Atlas", labelZh: "星图", Icon: Globe2 },
@@ -75,6 +74,7 @@ function ProductTabs({
           key={id}
           className={activeView === id ? "active" : ""}
           aria-current={activeView === id ? "page" : undefined}
+          aria-controls={`${id}-view`}
           onClick={() => onSelect(id)}
         >
           <Icon size={iconSize} />
@@ -95,14 +95,27 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [heroBlockIndex, setHeroBlockIndex] = useState(1);
-  const [activeView, setActiveView] = useState<ProductView>("relay");
-  const [relayPane, setRelayPane] = useState<"verify" | "council">("verify");
+  const [productLocation, setProductLocation] = useState<ProductLocation>(() => parseProductHash(window.location.hash));
   const heroTouchStartX = useRef<number | null>(null);
   const heroBlock = HERO_BLOCKS[heroBlockIndex];
+  const { view: activeView, relayPane } = productLocation;
+
+  const navigateProduct = (next: ProductLocation, replace = false) => {
+    setProductLocation(next);
+    const nextHash = formatProductHash(next);
+    if (window.location.hash !== nextHash) {
+      window.history[replace ? "replaceState" : "pushState"]({}, "", nextHash);
+    }
+  };
 
   const selectProductView = (view: ProductView) => {
-    if (view === "relay") setRelayPane("verify");
-    setActiveView(view);
+    navigateProduct({ view, relayPane: "verify" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const selectRelayPane = (nextPane: RelayPane) => {
+    navigateProduct({ view: "relay", relayPane: nextPane });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const moveHeroBlock = (direction: -1 | 1) => {
@@ -117,6 +130,19 @@ export default function App() {
       setError(previewError instanceof Error ? previewError.message : "Could not load the preview. · 无法加载预览。");
     }
   };
+
+  useEffect(() => {
+    const syncLocation = () => setProductLocation(parseProductHash(window.location.hash));
+    window.addEventListener("popstate", syncLocation);
+    window.addEventListener("hashchange", syncLocation);
+    if (window.location.hash !== formatProductHash(productLocation)) {
+      window.history.replaceState({}, "", formatProductHash(productLocation));
+    }
+    return () => {
+      window.removeEventListener("popstate", syncLocation);
+      window.removeEventListener("hashchange", syncLocation);
+    };
+  }, []);
 
   useEffect(() => {
     void Promise.all([
@@ -149,13 +175,16 @@ export default function App() {
     <div className="app-shell">
       <div className="product-frame">
         <header className="site-header">
-          <a className="brand" href="#top" aria-label="Fact Atlas home" onClick={() => selectProductView("relay")}>
+          <a className="brand" href="#relay" aria-label="Fact Atlas home" onClick={(event) => { event.preventDefault(); selectProductView("relay"); }}>
             <span className="brand-mark"><Globe2 size={19} /></span>
             <span className="brand-copy"><strong>Fact Atlas</strong><small>知识星球 · powered by FactRelay</small></span>
           </a>
           <ProductTabs activeView={activeView} className="product-nav" iconSize={14} onSelect={selectProductView} />
           <div className="header-meta">
-            <span className="header-status" aria-label="Network status"><i className={health?.liveReady ? "pulse-dot connected" : "pulse-dot"} />{health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}</span>
+            <div className="header-runtime" aria-label="Runtime status · 运行状态">
+              <span className="header-status"><i className={health?.liveReady ? "pulse-dot connected" : "pulse-dot"} />{health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}</span>
+              <span className={health?.signalCacheReady ? "header-status cache-ready" : "header-status"}><i className={health?.signalCacheReady ? "pulse-dot cache" : "pulse-dot"} />{health?.signalCacheReady ? "3-day cache · 三日缓存" : "Local cache · 本地缓存"}</span>
+            </div>
             <PwaInstall />
             <a href="https://github.com/narratorzhang0307/Fact-Atlas" target="_blank" rel="noreferrer">
               <Github size={16} /> <span>GitHub</span>
@@ -164,10 +193,10 @@ export default function App() {
         </header>
 
         <main id="top" className={`view-${activeView}`}>
-          {activeView === "relay" && <>
+          {activeView === "relay" && <div id="relay-view">
           <nav className="relay-pane-tabs" aria-label="FactRelay views · FactRelay 视图">
-            <button type="button" className={relayPane === "verify" ? "active" : ""} onClick={() => setRelayPane("verify")}><FileSearch size={16} /><span>Verification<small>事实核验</small></span></button>
-            <button type="button" className={relayPane === "council" ? "active" : ""} onClick={() => setRelayPane("council")}><Gavel size={16} /><span>Evidence Council<small>多方审理</small></span></button>
+            <button type="button" className={relayPane === "verify" ? "active" : ""} aria-pressed={relayPane === "verify"} onClick={() => selectRelayPane("verify")}><FileSearch size={16} /><span>Verification<small>事实核验</small></span></button>
+            <button type="button" className={relayPane === "council" ? "active" : ""} aria-pressed={relayPane === "council"} onClick={() => selectRelayPane("council")}><Gavel size={16} /><span>Evidence Council<small>多方审理</small></span></button>
           </nav>
           {relayPane === "verify" ? <>
           <section className="hero">
@@ -306,23 +335,23 @@ export default function App() {
                 <ResultView result={result} />
                 <div className="result-next-actions">
                   <button type="button" onClick={() => selectProductView("atlas")}><Archive size={16} /><span>Place in Fact Atlas<small>写入知识星球</small></span></button>
-                  <button type="button" onClick={() => setRelayPane("council")}><Gavel size={16} /><span>Open Evidence Council<small>进入多方审理</small></span></button>
+                  <button type="button" onClick={() => selectRelayPane("council")}><Gavel size={16} /><span>Open Evidence Council<small>进入多方审理</small></span></button>
                 </div>
               </>}
             </div>
           </section>
-          </> : <EvidenceCouncil result={result} onGoRelay={() => setRelayPane("verify")} onGoAtlas={() => selectProductView("atlas")} />}
-          </>}
+          </> : <EvidenceCouncil result={result} onGoRelay={() => selectRelayPane("verify")} onGoAtlas={() => selectProductView("atlas")} />}
+          </div>}
 
-          {activeView === "atlas" && <FactAtlas
+          {activeView === "atlas" && <div id="atlas-view"><FactAtlas
             currentResult={result}
             onOpenResult={(atlasResult) => {
               setResult(atlasResult);
               selectProductView("relay");
               window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
             }}
-          />}
-          {activeView === "signals" && <SignalDesk
+          /></div>}
+          {activeView === "signals" && <div id="signals-view"><SignalDesk
             onInvestigate={(signal) => {
               setKind("text");
               setContent(signal.claim);
@@ -332,7 +361,7 @@ export default function App() {
               selectProductView("relay");
               window.setTimeout(() => document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
             }}
-          />}
+          /></div>}
         </main>
 
         <ProductTabs activeView={activeView} className="mobile-tabbar" iconSize={21} onSelect={selectProductView} />

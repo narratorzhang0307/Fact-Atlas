@@ -135,6 +135,9 @@ a { color: inherit; }
 .pulse-dot.connected { background: var(--lime); box-shadow: 0 0 0 4px rgba(184, 255, 92, .13); }
 
 .header-meta { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
+.header-runtime { display: flex; align-items: center; gap: 6px; }
+.header-status.cache-ready { border-color: rgba(188, 236, 242, .45); color: var(--cyan); }
+.pulse-dot.cache { background: var(--cyan); box-shadow: 0 0 0 4px rgba(188, 236, 242, .12); }
 .header-meta > span, .header-meta a {
   display: inline-flex;
   align-items: center;
@@ -1190,6 +1193,7 @@ footer {
 .visually-hidden { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 
 @media (max-width: 1080px) {
+  .header-runtime .header-status:nth-child(2) { display: none; }
   .hero { grid-template-columns: 1fr; gap: 34px; }
   .relay-deck-shell { max-width: 680px; }
   .workspace { grid-template-columns: 340px minmax(0, 1fr); }

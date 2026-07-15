@@ -5,6 +5,7 @@ export type SourceStance = "support" | "refute" | "context";
 export interface HealthStatus {
   ok: boolean;
   liveReady: boolean;
+  signalCacheReady: boolean;
   provider: string;
   baseUrl: string;
   models: string[];
