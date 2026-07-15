@@ -155,32 +155,25 @@ def desktop_frame(source: Path, label: str, crop: tuple[float, float, float, flo
 
 
 def paste_phone(canvas: Image.Image, source: Path, center_x: int, top: int, screen_height: int = 790) -> tuple[int, int, int, int]:
-    """Place one real mobile capture inside a restrained, centered phone shell."""
+    """Place one real mobile capture inside a single, restrained phone shell."""
     screenshot = Image.open(source).convert("RGB")
     screen_width = round(screenshot.width * screen_height / screenshot.height)
     screenshot = screenshot.resize((screen_width, screen_height), Image.Resampling.LANCZOS)
 
-    phone_width = screen_width + 34
-    phone_height = screen_height + 54
+    phone_width = screen_width + 20
+    phone_height = screen_height + 30
     left = center_x - phone_width // 2
     right = left + phone_width
     bottom = top + phone_height
     draw = ImageDraw.Draw(canvas)
-    draw.rounded_rectangle((left + 18, top + 18, right + 18, bottom + 18), radius=58, fill=VIOLET)
-    draw.rounded_rectangle((left, top, right, bottom), radius=58, fill=PAPER, outline=BLACK, width=5)
-    draw.rounded_rectangle((left + 9, top + 9, right - 9, bottom - 9), radius=50, fill=BLACK)
+    draw.rounded_rectangle((left + 9, top + 10, right + 9, bottom + 10), radius=49, fill="#252720")
+    draw.rounded_rectangle((left, top, right, bottom), radius=49, fill=BLACK, outline=PAPER, width=4)
 
     screen_left = center_x - screen_width // 2
-    screen_top = top + 27
+    screen_top = top + 15
     mask = Image.new("L", screenshot.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, screen_width, screen_height), radius=34, fill=255)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, screen_width, screen_height), radius=38, fill=255)
     canvas.paste(screenshot, (screen_left, screen_top), mask)
-    speaker_width = 78
-    draw.rounded_rectangle(
-        (center_x - speaker_width // 2, top + 13, center_x + speaker_width // 2, top + 20),
-        radius=4,
-        fill="#4c4d48",
-    )
     return left, top, right, bottom
 
 
