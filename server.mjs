@@ -126,7 +126,11 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (request.method === "GET" && url.pathname === "/api/signals") {
-      sendJson(response, 200, await getDailySignals(url.searchParams.get("topic") || "ai", process.env));
+      sendJson(response, 200, await getDailySignals(
+        url.searchParams.get("topic") || "ai",
+        url.searchParams.get("date") || "",
+        process.env,
+      ));
       return;
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {

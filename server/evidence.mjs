@@ -74,14 +74,14 @@ export function parseBingNewsRss(xml, limit = 6) {
   }).filter((item) => item.url);
 }
 
-async function fetchRssSources(url, parser, limit, signal) {
-  const response = await fetch(url, {
+async function fetchRssSources(url, parser, limit, signal, origin, fetchImpl = fetch) {
+  const response = await fetchImpl(url, {
     // Cloudflare Workers reject attempts to set the restricted User-Agent header.
     headers: { Accept: "application/rss+xml, application/xml, text/xml" },
     signal,
   });
   if (!response.ok) throw new Error(`Evidence search returned ${response.status}.`);
-  const sources = parser(await response.text(), limit);
+  const sources = parser(await response.text(), limit).map((source) => ({ ...source, origin: origin || source.origin }));
   if (!sources.length) throw new Error("Evidence search returned no usable sources.");
   return sources;
 }
@@ -105,6 +105,53 @@ export async function searchNewsEvidence(query, { limit = 6, signal } = {}) {
   } catch {
     throw new Error("Public news evidence search is temporarily unavailable.");
   }
+}
+
+function nextUtcDate(date) {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + 1);
+  return value.toISOString().slice(0, 10);
+}
+
+function datedQuery(query, date) {
+  return `${String(query).trim()} after:${date} before:${nextUtcDate(date)}`;
+}
+
+export async function searchGlobalNewsEvidence(queries, date, { limit = 12, signal, fetchImpl = fetch } = {}) {
+  const englishQuery = datedQuery(queries?.en || queries?.zh || "", date);
+  const chineseQuery = datedQuery(queries?.zh || queries?.en || "", date);
+  if (!englishQuery.trim() || !chineseQuery.trim()) return [];
+
+  const feeds = [
+    {
+      url: `https://news.google.com/rss/search?q=${encodeURIComponent(englishQuery)}&hl=en-US&gl=US&ceid=US:en`,
+      parser: parseGoogleNewsRss,
+      origin: "Google News RSS · US/en",
+    },
+    {
+      url: `https://news.google.com/rss/search?q=${encodeURIComponent(englishQuery)}&hl=en-GB&gl=GB&ceid=GB:en`,
+      parser: parseGoogleNewsRss,
+      origin: "Google News RSS · GB/en",
+    },
+    {
+      url: `https://news.google.com/rss/search?q=${encodeURIComponent(chineseQuery)}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans`,
+      parser: parseGoogleNewsRss,
+      origin: "Google News RSS · CN/zh",
+    },
+    {
+      url: `https://www.bing.com/news/search?q=${encodeURIComponent(englishQuery)}&format=rss&mkt=en-US&setlang=en-US`,
+      parser: parseBingNewsRss,
+      origin: "Bing News RSS · US/en",
+    },
+  ];
+
+  const perFeedLimit = Math.max(4, Math.ceil(limit / 2));
+  const settled = await Promise.allSettled(feeds.map((feed) => (
+    fetchRssSources(feed.url, feed.parser, perFeedLimit, signal, feed.origin, fetchImpl)
+  )));
+  const merged = settled.flatMap((result) => result.status === "fulfilled" ? result.value : []);
+  if (!merged.length) throw new Error("Global public news search is temporarily unavailable.");
+  return dedupeSources(merged, limit);
 }
 
 export function curatedEvidenceUrls(claim) {
@@ -230,11 +277,26 @@ export async function fetchUrlEvidence(rawUrl, { signal, resolveHost } = {}) {
 }
 
 export function dedupeSources(sources, limit = 7) {
-  const seen = new Set();
+  const seenTitles = new Set();
+  const seenUrls = new Set();
   return sources.filter((source) => {
-    const key = `${source.publisher}|${source.title}`.toLowerCase();
-    if (!source.url || seen.has(key)) return false;
-    seen.add(key);
+    const titleKey = String(source.title || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/\s[-–—|]\s[^-–—|]{2,80}$/, "")
+      .trim();
+    let urlKey = String(source.url || "");
+    try {
+      const parsed = new URL(urlKey);
+      parsed.hash = "";
+      ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach((key) => parsed.searchParams.delete(key));
+      urlKey = parsed.toString();
+    } catch {
+      urlKey = "";
+    }
+    if (!urlKey || !titleKey || seenTitles.has(titleKey) || seenUrls.has(urlKey)) return false;
+    seenTitles.add(titleKey);
+    seenUrls.add(urlKey);
     return true;
   }).slice(0, limit);
 }

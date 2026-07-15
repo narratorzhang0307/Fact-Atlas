@@ -91,7 +91,11 @@ const worker = {
       if (request.method === "GET" && url.pathname === "/api/map-config") return json(getMapboxConfig(env));
       if (request.method === "GET" && url.pathname === "/api/signals") {
         enforceRateLimit(request);
-        return json(await getDailySignals(url.searchParams.get("topic") || "ai", env));
+        return json(await getDailySignals(
+          url.searchParams.get("topic") || "ai",
+          url.searchParams.get("date") || "",
+          env,
+        ));
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
         enforceRateLimit(request);

@@ -6,6 +6,7 @@ import {
   fetchUrlEvidence,
   parseBingNewsRss,
   parseGoogleNewsRss,
+  searchGlobalNewsEvidence,
   searchNewsEvidence,
 } from "./evidence.mjs";
 
@@ -69,5 +70,24 @@ describe("evidence parsing", () => {
     } finally {
       fetchMock.mockRestore();
     }
+  });
+
+  it("merges dated multi-region feeds into one deduplicated public packet", async () => {
+    const xml = `<rss><channel><item><title>Global signal</title><link>https://news.example/a</link><pubDate>Wed, 15 Jul 2026 08:00:00 GMT</pubDate><description>Evidence</description><source url="https://publisher.example">Publisher</source></item></channel></rss>`;
+    const requested = [];
+    const sources = await searchGlobalNewsEvidence(
+      { en: "artificial intelligence", zh: "人工智能" },
+      "2026-07-15",
+      {
+        fetchImpl: async (url) => {
+          requested.push(String(url));
+          return new Response(xml, { status: 200, headers: { "Content-Type": "application/xml" } });
+        },
+      },
+    );
+    expect(requested).toHaveLength(4);
+    expect(requested.every((url) => url.includes("after%3A2026-07-15") && url.includes("before%3A2026-07-16"))).toBe(true);
+    expect(sources).toHaveLength(1);
+    expect(sources[0].origin).toContain("US/en");
   });
 });

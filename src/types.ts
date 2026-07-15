@@ -116,6 +116,18 @@ export interface DailySignalBrief {
   topicLabel: string;
   topicLabelZh: string;
   agent: string;
+  calendar: {
+    selectedDate: string;
+    minDate: string;
+    maxDate: string;
+    timezone: string;
+    historyDays: number;
+  };
+  agentSystem: {
+    mainAgent: { id: string; name: string; responsibility: string };
+    topicAgent: { id: string; name: string; responsibility: string; skills: string[] };
+    skills: Array<{ id: string; name: string; kind: string }>;
+  };
   model: string;
   requestId: string | null;
   cacheHit: boolean;
