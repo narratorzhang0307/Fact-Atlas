@@ -9,6 +9,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": "focus-existing" },
+  "prefer_related_applications": false,
   "orientation": "any",
   "background_color": "#11120f",
   "theme_color": "#b8ff5c",

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "fact-atlas-v1";
+const CACHE_VERSION = "fact-atlas-v2";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -8,8 +8,23 @@ const APP_SHELL = [
   "/icons/apple-touch-icon.png",
 ];
 
+async function primeAppShell() {
+  const cache = await caches.open(CACHE_VERSION);
+  await cache.addAll(APP_SHELL);
+
+  // Vite emits content-hashed bundles. Discover and cache them during install so
+  // the first standalone launch can render even if the network is unavailable.
+  const home = await fetch("/", { cache: "reload" });
+  if (!home.ok) return;
+  const html = await home.clone().text();
+  const assetUrls = [...html.matchAll(/(?:src|href)=["'](\/assets\/[^"']+)["']/g)]
+    .map((match) => match[1]);
+  await cache.put("/", home);
+  if (assetUrls.length) await cache.addAll([...new Set(assetUrls)]);
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(primeAppShell());
   self.skipWaiting();
 });
 
@@ -35,22 +50,29 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) caches.open(CACHE_VERSION).then((cache) => cache.put("/", response.clone()));
+      (async () => {
+        try {
+          const response = await fetch(request);
+          if (response.ok) await (await caches.open(CACHE_VERSION)).put("/", response.clone());
           return response;
-        })
-        .catch(() => caches.match("/")),
+        } catch {
+          return caches.match("/");
+        }
+      })(),
     );
     return;
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const refreshed = fetch(request).then((response) => {
+    caches.match(request).then(async (cached) => {
+      const refreshed = fetch(request).then(async (response) => {
         if (response.ok) caches.open(CACHE_VERSION).then((cache) => cache.put(request, response.clone()));
         return response;
       });
+      if (cached) {
+        event.waitUntil(refreshed.catch(() => undefined));
+        return cached;
+      }
       return cached || refreshed;
     }),
   );

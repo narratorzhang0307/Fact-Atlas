@@ -2,7 +2,7 @@ import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { lookup } from "node:dns/promises";
 import { createServer } from "node:http";
 import { isIP } from "node:net";
-import { extname, resolve } from "node:path";
+import { basename, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEMO_RESULT } from "./server/demo.mjs";
 import {
@@ -17,7 +17,10 @@ import { getDailySignals } from "./server/signals.mjs";
 import { getMapboxConfig } from "./server/map-config.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
-const DIST = resolve(ROOT, "dist");
+const DIST_ROOT = resolve(ROOT, "dist");
+const DIST = existsSync(resolve(DIST_ROOT, "client/index.html"))
+  ? resolve(DIST_ROOT, "client")
+  : DIST_ROOT;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 async function resolveHost(hostname) {
@@ -73,6 +76,7 @@ function contentType(path) {
     ".jpg": "image/jpeg",
     ".webp": "image/webp",
     ".json": "application/json; charset=utf-8",
+    ".webmanifest": "application/manifest+json; charset=utf-8",
   }[extname(path)] || "application/octet-stream";
 }
 
@@ -84,10 +88,15 @@ function serveProduction(request, response) {
     return;
   }
   if (!existsSync(filePath) || statSync(filePath).isDirectory()) filePath = resolve(DIST, "index.html");
-  response.writeHead(200, {
+  const filename = basename(filePath);
+  const updateSensitive = filename === "index.html" || filename === "sw.js" || filename === "manifest.webmanifest";
+  const headers = {
     "Content-Type": contentType(filePath),
-    "Cache-Control": filePath.endsWith("index.html") ? "no-cache" : "public, max-age=31536000, immutable",
-  });
+    "Cache-Control": updateSensitive ? "no-cache" : "public, max-age=31536000, immutable",
+    "X-Content-Type-Options": "nosniff",
+  };
+  if (filename === "sw.js") headers["Service-Worker-Allowed"] = "/";
+  response.writeHead(200, headers);
   createReadStream(filePath).pipe(response);
 }
 
@@ -162,6 +171,7 @@ const server = createServer(async (request, response) => {
 });
 
 const port = Number(process.env.PORT) || 5173;
-server.listen(port, "0.0.0.0", () => {
-  console.log(`FactRelay ${IS_PRODUCTION ? "production" : "development"} server: http://localhost:${port}`);
+const host = process.env.HOST || "0.0.0.0";
+server.listen(port, host, () => {
+  console.log(`FactRelay ${IS_PRODUCTION ? "production" : "development"} server: http://${host}:${port}`);
 });
