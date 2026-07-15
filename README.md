@@ -664,9 +664,13 @@ npm audit --audit-level=low
 .
 ├── src/
 │   ├── App.tsx                     # Relay / Atlas / Signals 三 Tab 产品壳
+│   ├── api.ts                      # 浏览器 JSON 请求、错误码与畸形响应边界
+│   ├── navigation.ts               # 可深链的三 Tab / Council 路由契约
+│   ├── useProductNavigation.ts     # History 同步与减少动效滚动
 │   ├── atlas.ts                    # 浏览器本地事实节点、订阅与关系模型
 │   ├── signal-cache.ts             # 72 小时、24 版次的 Signals 设备缓冲
 │   └── components/
+│       ├── ProductTabs.tsx         # 桌面/手机共用导航
 │       ├── ClaimComposer.tsx       # 文字 / URL / 图片输入
 │       ├── EvidenceCouncil.tsx     # 证据、调查、质疑、裁决与回执
 │       ├── FactAtlas.tsx           # 私人知识库与未落位轨道
@@ -685,6 +689,7 @@ npm audit --audit-level=low
 │   ├── signal-object-cache.mjs      # OSS 三日公开版次读取与完整回执校验
 │   ├── signal-snapshot.mjs         # 可复现日期快照
 │   ├── rate-limit.mjs              # Node / Sites 共用的推理限流与内存上限
+│   ├── runtime-contract.mjs         # Node / Sites 共用健康、缓存头与错误契约
 │   ├── geocode.mjs                 # Nominatim 地点候选
 │   └── *.test.mjs                  # 核心服务测试
 ├── worker/                         # Edge-hosting API 入口与测试

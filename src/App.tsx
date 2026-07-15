@@ -1,4 +1,4 @@
-import { Archive, ChevronLeft, ChevronRight, FileSearch, Gavel, Github, Globe2, Radio, RadioTower, type LucideIcon } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, FileSearch, Gavel, Github, Globe2, Radio } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ClaimComposer } from "./components/ClaimComposer";
 import { ResultView } from "./components/ResultView";
@@ -7,8 +7,9 @@ import { SignalDesk } from "./components/SignalDesk";
 import { EvidenceCouncil } from "./components/EvidenceCouncil";
 import { PwaInstall } from "./components/PwaInstall";
 import { AgentOrchestration } from "./components/AgentOrchestration";
+import { ProductTabs } from "./components/ProductTabs";
 import { requestJson } from "./api";
-import { formatProductHash, parseProductHash, type ProductLocation, type ProductView, type RelayPane } from "./navigation";
+import { preferredScrollBehavior, useProductNavigation } from "./useProductNavigation";
 import type { HealthStatus, InputKind, VerificationResult } from "./types";
 
 const HERO_BLOCKS = [
@@ -38,40 +39,8 @@ const HERO_BLOCKS = [
   },
 ] as const;
 
-const PRODUCT_VIEWS: Array<{ id: ProductView; label: string; labelZh: string; Icon: LucideIcon }> = [
-  { id: "relay", label: "Relay", labelZh: "探索", Icon: FileSearch },
-  { id: "atlas", label: "Atlas", labelZh: "星图", Icon: Globe2 },
-  { id: "signals", label: "Signals", labelZh: "发现", Icon: RadioTower },
-];
-
-function ProductTabs({
-  activeView,
-  className,
-  iconSize,
-  onSelect,
-}: {
-  activeView: ProductView;
-  className: string;
-  iconSize: number;
-  onSelect: (view: ProductView) => void;
-}) {
-  return (
-    <nav className={className} aria-label={className === "mobile-tabbar" ? "Mobile product tabs · 手机端产品标签" : "Product views · 产品视图"}>
-      {PRODUCT_VIEWS.map(({ id, label, labelZh, Icon }) => (
-        <button
-          type="button"
-          key={id}
-          className={activeView === id ? "active" : ""}
-          aria-current={activeView === id ? "page" : undefined}
-          aria-controls={`${id}-view`}
-          onClick={() => onSelect(id)}
-        >
-          <Icon size={iconSize} />
-          <span>{label}<small>{labelZh}</small></span>
-        </button>
-      ))}
-    </nav>
-  );
+function scrollToView(selector: string) {
+  window.setTimeout(() => document.querySelector(selector)?.scrollIntoView({ behavior: preferredScrollBehavior(), block: "start" }), 40);
 }
 
 export default function App() {
@@ -86,29 +55,11 @@ export default function App() {
   const [error, setError] = useState("");
   const [startupNotice, setStartupNotice] = useState("");
   const [heroBlockIndex, setHeroBlockIndex] = useState(1);
-  const [productLocation, setProductLocation] = useState<ProductLocation>(() => parseProductHash(window.location.hash));
+  const { location: productLocation, selectView: selectProductView, selectRelayPane } = useProductNavigation();
   const heroTouchStartX = useRef<number | null>(null);
   const verificationAbortRef = useRef<AbortController | null>(null);
   const heroBlock = HERO_BLOCKS[heroBlockIndex];
   const { view: activeView, relayPane } = productLocation;
-
-  const navigateProduct = (next: ProductLocation, replace = false) => {
-    setProductLocation(next);
-    const nextHash = formatProductHash(next);
-    if (window.location.hash !== nextHash) {
-      window.history[replace ? "replaceState" : "pushState"]({}, "", nextHash);
-    }
-  };
-
-  const selectProductView = (view: ProductView) => {
-    navigateProduct({ view, relayPane: "verify" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const selectRelayPane = (nextPane: RelayPane) => {
-    navigateProduct({ view: "relay", relayPane: nextPane });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   const moveHeroBlock = (direction: -1 | 1) => {
     setHeroBlockIndex((current) => (current + direction + HERO_BLOCKS.length) % HERO_BLOCKS.length);
@@ -122,19 +73,6 @@ export default function App() {
       setError(previewError instanceof Error ? previewError.message : "Could not load the preview. · 无法加载预览。");
     }
   };
-
-  useEffect(() => {
-    const syncLocation = () => setProductLocation(parseProductHash(window.location.hash));
-    window.addEventListener("popstate", syncLocation);
-    window.addEventListener("hashchange", syncLocation);
-    if (window.location.hash !== formatProductHash(productLocation)) {
-      window.history.replaceState({}, "", formatProductHash(productLocation));
-    }
-    return () => {
-      window.removeEventListener("popstate", syncLocation);
-      window.removeEventListener("hashchange", syncLocation);
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -176,7 +114,7 @@ export default function App() {
         signal: controller.signal,
       });
       setResult(nextResult);
-      window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+      scrollToView("[data-testid='result-view']");
     } catch (verificationError) {
       if (controller.signal.aborted) return;
       setError(verificationError instanceof Error ? verificationError.message : "Verification failed. · 核查失败。");
@@ -371,7 +309,7 @@ export default function App() {
             onOpenResult={(atlasResult) => {
               setResult(atlasResult);
               selectProductView("relay");
-              window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+              scrollToView("[data-testid='result-view']");
             }}
           /></div>}
           {activeView === "signals" && <div id="signals-view"><SignalDesk
@@ -382,7 +320,7 @@ export default function App() {
               setImageName("");
               setError("");
               selectProductView("relay");
-              window.setTimeout(() => document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+              scrollToView(".workspace");
             }}
           /></div>}
         </main>

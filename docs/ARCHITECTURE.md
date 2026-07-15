@@ -222,6 +222,18 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 
 ## Trust boundaries
 
+### Browser application boundary
+
+The React shell keeps navigation, transport, and product state separate:
+
+- `useProductNavigation.ts` owns the canonical `#relay`, `#relay/council`, `#atlas`, and `#signals` URLs, browser back/forward synchronization, and reduced-motion-aware scrolling.
+- `ProductTabs.tsx` is the single desktop/mobile navigation renderer; both surfaces share the same active state and ARIA contract.
+- `api.ts` is the only browser JSON transport boundary. It preserves public error codes, rejects malformed or empty successful responses, and never treats an HTML gateway page as valid product data.
+- health and preview requests start independently, so a temporary health endpoint failure cannot suppress the local preview and a preview failure cannot falsify runtime readiness.
+- in-flight verification can be explicitly cancelled; unmounting the application aborts the browser request.
+
+Node self-hosting and the Sites Worker share `server/runtime-contract.mjs`. Public health metadata, Signals cache provenance, cache policy, sanitized errors, and `Retry-After` behavior therefore remain identical across both runtime entries.
+
 ### Browser → FactRelay server
 
 - Input kind is an allowlist: text, URL, or image.
