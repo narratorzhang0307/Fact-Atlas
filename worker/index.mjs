@@ -9,16 +9,15 @@ import { verifyClaim } from "../server/verify.mjs";
 import { geocodePlace } from "../server/geocode.mjs";
 import { getDailySignals } from "../server/signals.mjs";
 import { getMapboxConfig } from "../server/map-config.mjs";
+import { createFixedWindowLimiter } from "../server/rate-limit.mjs";
 
 const MAX_BODY_BYTES = 7_500_000;
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_RUNS_PER_WINDOW = 6;
-const requestWindows = new Map();
+const inferenceLimiter = createFixedWindowLimiter();
 
-function json(body, status = 200, cacheControl = "no-store") {
+function json(body, status = 200, cacheControl = "no-store", extraHeaders = {}) {
   return Response.json(body, {
     status,
-    headers: { "Cache-Control": cacheControl },
+    headers: { "Cache-Control": cacheControl, "X-Content-Type-Options": "nosniff", ...extraHeaders },
   });
 }
 
@@ -40,19 +39,7 @@ async function readJson(request) {
 
 function enforceRateLimit(request) {
   const key = request.headers.get("cf-connecting-ip") || "anonymous";
-  const now = Date.now();
-  const current = requestWindows.get(key);
-  if (!current || now - current.startedAt >= WINDOW_MS) {
-    requestWindows.set(key, { startedAt: now, count: 1 });
-    return;
-  }
-  if (current.count >= MAX_RUNS_PER_WINDOW) {
-    throw new GonkaError("Too many verification runs. Please try again later.", {
-      status: 429,
-      code: "RATE_LIMITED",
-    });
-  }
-  current.count += 1;
+  inferenceLimiter.check(key);
 }
 
 async function serveApp(request, env) {
@@ -99,7 +86,12 @@ const worker = {
           env,
           { beforeLive: () => enforceRateLimit(request) },
         );
-        return json(signals, 200, signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss" ? "public, max-age=86400, immutable" : "no-store");
+        return json(
+          signals,
+          200,
+          signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss" ? "public, max-age=86400, immutable" : "no-store",
+          { "X-Fact-Atlas-Cache": signals.cacheLayer || "runtime", "X-Fact-Atlas-Edition": signals.calendar.selectedDate },
+        );
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
         enforceRateLimit(request);
@@ -117,7 +109,7 @@ const worker = {
           message: status >= 500 && !(error instanceof GonkaError) ? "Unexpected server error." : error.message,
           ...(error?.details ? { details: error.details } : {}),
         },
-      }, status);
+      }, status, "no-store", status === 429 ? { "Retry-After": String(error?.details?.retryAfterSeconds || 60) } : undefined);
     }
   },
 };

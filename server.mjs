@@ -15,6 +15,7 @@ import { verifyClaim } from "./server/verify.mjs";
 import { geocodePlace } from "./server/geocode.mjs";
 import { getDailySignals } from "./server/signals.mjs";
 import { getMapboxConfig } from "./server/map-config.mjs";
+import { createFixedWindowLimiter } from "./server/rate-limit.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST_ROOT = resolve(ROOT, "dist");
@@ -22,6 +23,13 @@ const DIST = existsSync(resolve(DIST_ROOT, "client/index.html"))
   ? resolve(DIST_ROOT, "client")
   : DIST_ROOT;
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const inferenceLimiter = createFixedWindowLimiter();
+
+function clientKey(request) {
+  const forwarded = request.headers["x-forwarded-for"];
+  const firstForwarded = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(",")[0];
+  return firstForwarded?.trim() || request.socket.remoteAddress || "anonymous";
+}
 
 async function resolveHost(hostname) {
   const cleanHostname = hostname.replace(/^\[|\]$/g, "");
@@ -47,6 +55,7 @@ function sendJson(response, status, body, headers = {}) {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(payload),
     "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
     ...headers,
   });
   response.end(payload);
@@ -141,13 +150,19 @@ const server = createServer(async (request, response) => {
         url.searchParams.get("topic") || "ai",
         url.searchParams.get("date") || "",
         process.env,
+        { beforeLive: () => inferenceLimiter.check(clientKey(request)) },
       );
-      sendJson(response, 200, signals, signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss"
-        ? { "Cache-Control": "public, max-age=86400, immutable" }
-        : undefined);
+      sendJson(response, 200, signals, {
+        ...(signals.cacheLayer === "snapshot" || signals.cacheLayer === "oss"
+          ? { "Cache-Control": "public, max-age=86400, immutable" }
+          : {}),
+        "X-Fact-Atlas-Cache": signals.cacheLayer || "runtime",
+        "X-Fact-Atlas-Edition": signals.calendar.selectedDate,
+      });
       return;
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {
+      inferenceLimiter.check(clientKey(request));
       const body = await readJson(request);
       sendJson(response, 200, await verifyClaim(body, process.env, { resolveHost }));
       return;
@@ -171,7 +186,7 @@ const server = createServer(async (request, response) => {
         message: status >= 500 && !(error instanceof GonkaError) ? "Unexpected server error." : error.message,
         ...(error?.details ? { details: error.details } : {}),
       },
-    });
+    }, status === 429 ? { "Retry-After": String(error?.details?.retryAfterSeconds || 60) } : undefined);
   }
 });
 
