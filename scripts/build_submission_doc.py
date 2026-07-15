@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the final bilingual FactRelay form-copy and handoff document."""
+"""Build the final bilingual Fact Atlas form-copy and handoff document."""
 
 from __future__ import annotations
 
@@ -30,39 +30,40 @@ from build_video_script import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DELIVERY = ROOT / "FactRelay_黑客松交付包"
-OUT = DELIVERY / "01_提交材料" / "FactRelay_报名表填写稿_中英双语.docx"
+DELIVERY = ROOT / "FactAtlas_黑客松交付包"
+OUT = DELIVERY / "01_提交材料" / "FactAtlas_报名表填写稿_中英双语.docx"
 
 BRIEF = "https://hackathonweekly.feishu.cn/wiki/M0pewmd0ti3z8IkVmVYcEzTWnIe"
 FORM = "https://hackathonweekly.feishu.cn/share/base/form/shrcnaF4yF8HmLhA42AH7DWlrPc"
 DEMO = "https://factrelay-ai3-2026.yediqizhang37.chatgpt.site"
 REPO = "https://github.com/narratorzhang0307/FactRelay"
 VIDEO_RELEASE = "https://github.com/narratorzhang0307/FactRelay/releases/tag/ai3-2026-submission"
-VIDEO_DIRECT = "https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactRelay_Demo_2m30s_Bilingual.mp4"
+VIDEO_DIRECT = "https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactAtlas_Demo_2m30s_Bilingual.mp4"
 
-PITCH_CN = "FactRelay 是一个基于 Gonka 的可追溯多模型事实核查工作台，将公开证据、对抗审查、确定性 Truth Score 与真实推理回执合并成一份可审计结论。"
-PITCH_EN = "FactRelay is a traceable multi-model fact-checking workbench on Gonka that turns public evidence, adversarial review, a deterministic Truth Score, and real inference receipts into one auditable verdict."
+PITCH_CN = "Fact Atlas 是一张基于 Gonka 的可验证个人知识地图：用户主动探索，或由全球主题 Agent 每日发现；FactRelay 与 Evidence Council 负责可追溯核验，最终由用户把有证据与回执的知识落位到私人星球。"
+PITCH_EN = "Fact Atlas is a verifiable personal knowledge map on Gonka: users explore directly or discover global signals through topic agents, while FactRelay and Evidence Council verify each claim before a human places it in a private Atlas."
 
 INTRO_CN = (
     "社交媒体与生成式 AI 让信息生成变得廉价，却让“为什么应该相信这个结论”变得更难回答。大多数 AI 事实核查产品仍只返回一段自信的文字，用户看不到来源是否真正回应主张，也看不到不同模型之间的分歧。\n\n"
-    "FactRelay 将文本、公开链接或截图转化为一次可追溯调查。系统先检索当前公开证据，再通过 GonkaRouter 让 Kimi-K2.6 担任调查方，让 MiniMax-M2.7 以质疑方角色检查循环引用、时间错位、因果跳跃和遗漏背景。最终 Truth Score 由确定性代码计算，并与来源账本、双模型判断、分歧程度、执行路径和原始 Gonka Request ID 一起展示。\n\n"
-    "FactRelay 不把推理回执当成“真理证明”；回执只证明哪一次 Gonka 请求生成了分析，事实仍由可检查的公开证据支持。"
+    "Fact Atlas 提供两条知识路径：Relay 让用户提交文本、公开链接或截图；Signals 让八个主题 Agent 每日扫描全球公开新闻，并通过 Gonka 完成第一道重要性筛选。重要性不等于真实性；用户选中后，候选主张才进入 FactRelay 深度核验。\n\n"
+    "FactRelay 检索当前公开证据，通过 GonkaRouter 让 Kimi-K2.6 调查、MiniMax-M2.7 对抗质疑，再用确定性代码计算 Truth Score。Evidence Council 将记录、调查、质疑和人工确认分成四个责任。最后，用户确认地点候选，把完整证据快照写入 Mapbox 私人知识地球；无法确定地点的知识留在未落位轨道，系统不伪造坐标。\n\n"
+    "推理回执只证明哪一次 Gonka 请求生成了分析，不冒充事实证明。"
 )
 
 INTRO_EN = (
     "Social media and generative AI have made information cheap to produce, while making one question harder to answer: why should anyone trust the verdict? Most AI fact checkers still return one confident paragraph, hiding whether the evidence addresses the exact claim and whether independent models disagreed.\n\n"
-    "FactRelay turns text, a public URL, or a screenshot into a traceable investigation. It retrieves current public evidence, sends the evidence packet to Kimi-K2.6 as the investigator, and asks MiniMax-M2.7 to act as an adversarial skeptic looking for source laundering, chronology errors, causal leaps, and omitted context. Tested deterministic code computes the Truth Score and keeps the evidence ledger, model disagreement, execution path, and untouched upstream Gonka Request IDs visible.\n\n"
-    "A request receipt proves which Gonka call produced the analysis; factual support still comes from inspectable evidence."
+    "Fact Atlas combines two knowledge paths. Relay accepts a user's text, public URL, or screenshot. Signals uses eight topic agents to scan public global news and sends only selected candidates into deep verification; its Gonka importance ranking is explicitly not a truth judgment.\n\n"
+    "FactRelay retrieves current evidence, assigns Kimi-K2.6 and MiniMax-M2.7 distinct investigator/skeptic roles through GonkaRouter, and calculates a deterministic Truth Score. Evidence Council separates clerk, investigator, skeptic, and human gate. A user-confirmed place candidate then enters a private browser-local Mapbox Atlas; uncertain locations remain unplaced. Request receipts prove provenance, not truth."
 )
 
 TECH_CN = (
-    "React 前端通过 Node/Cloudflare Worker API 接入核查链路。输入首先经过类型、长度、图片大小和 URL/SSRF 防护；非 AI 检索层抓取公开页面，并并发请求 Google News RSS 与 Bing News RSS。内置长城示例还透明地实时抓取 NASA、ESA、Smithsonian 权威页面，以抵抗新闻搜索服务偶发不可用。\n\n"
-    "所有语义推理均通过 https://api.gonkarouter.io/v1/chat/completions 完成。Kimi 负责主张提取和调查，MiniMax 负责对抗审查。模型只能引用已检索账本中的来源编号，越界编号在评分前被代码拒绝。Truth Score = 50 + 50 ×（55% 模型共识 + 45% 来源加权证据）；弱证据会把评分拉回 50，模型分歧会降低结论信心。若模型偶发返回非法 JSON，系统仅对同一 Gonka 模型进行一次严格结构化重试，并将失败请求保留为 partial 轨迹。"
+    "React 前端通过 Node/Cloudflare Worker API 接入核验链路。Relay 支持文本、公开链接与图片；Signals 使用公开新闻 RSS 与 Gonka Kimi 生成每日双语重要性筛选，并保留独立上游回执。输入经过类型、长度、图片大小和 URL/SSRF 防护；非 AI 检索层抓取公开页面与 Google/Bing News RSS。\n\n"
+    "所有语义推理均通过 https://api.gonkarouter.io/v1/chat/completions 完成。Kimi 负责主张提取、Signals 排序和调查，MiniMax 负责对抗审查。模型只能引用已检索账本中的来源编号；Truth Score = 50 + 50 ×（55% 模型共识 + 45% 来源加权证据）。通过 OpenStreetMap Nominatim 获得的地点候选必须由用户点击确认；Mapbox 仅用于深色地球呈现，不参与事实判断。"
 )
 
 TECH_EN = (
-    "The React client calls a Node/Cloudflare Worker verification API. Input passes type, length, image-size, URL, redirect, DNS, and SSRF guards. A non-AI retrieval layer fetches public pages and races Google News RSS with Bing News RSS. The built-in Great Wall starter also fetches a transparent live allowlist of NASA, ESA, and Smithsonian pages.\n\n"
-    "All semantic inference uses the GonkaRouter chat-completions endpoint. Kimi extracts/investigates; MiniMax performs adversarial review. Models may cite only retrieved source indexes. Deterministic code computes Truth Score = 50 + 50 × (55% model consensus + 45% source-weighted evidence), pulls weak evidence toward uncertainty, and lowers confidence when models disagree. One same-model structured retry handles malformed JSON while preserving the failed call as a partial trace step."
+    "The React client calls a Node/Cloudflare Worker API. Relay handles text, public URLs, and images. Signals retrieves public news and asks Kimi through GonkaRouter to rank importance with a separate upstream receipt. Inputs pass type, length, image-size, URL, redirect, DNS, and SSRF guards.\n\n"
+    "All semantic inference uses the GonkaRouter chat-completions endpoint. Kimi extracts, ranks, and investigates; MiniMax performs adversarial review. Models may cite only retrieved source indexes. Deterministic code computes Truth Score = 50 + 50 × (55% model consensus + 45% source-weighted evidence). Nominatim proposes place candidates and the user confirms one; Mapbox renders the dark globe but performs no inference."
 )
 
 
@@ -150,11 +151,11 @@ def configure_submission_document(doc: Document) -> None:
     section = doc.sections[0]
     hp = section.header.paragraphs[0]
     hp.clear()
-    r = hp.add_run("FACTRELAY  /  FINAL SUBMISSION PACK  ·  最终报名材料")
+    r = hp.add_run("FACT ATLAS  /  FINAL SUBMISSION PACK  ·  最终报名材料")
     set_font(r, 7.5, True, MUTED)
-    doc.core_properties.title = "FactRelay 黑客松报名表填写稿"
+    doc.core_properties.title = "Fact Atlas 黑客松报名表填写稿"
     doc.core_properties.subject = "AI³ Growth Hackathon 2026 · Track 3 · Gonka"
-    doc.core_properties.author = "FactRelay"
+    doc.core_properties.author = "Fact Atlas"
 
 
 def build(output: Path) -> None:
@@ -165,7 +166,7 @@ def build(output: Path) -> None:
     r = p.add_run("AI³ GROWTH HACKATHON 2026  ·  TRACK 3  ·  GONKA: AI FOR SOCIETY")
     set_font(r, 8.5, True, VIOLET)
     title = doc.add_paragraph(style="Title")
-    r = title.add_run("FactRelay")
+    r = title.add_run("Fact Atlas")
     set_font(r, 32, True, INK)
     p = doc.add_paragraph()
     r = p.add_run("Final Form Copy & Delivery Guide")
@@ -174,7 +175,7 @@ def build(output: Path) -> None:
     r = p.add_run("报名表填写稿与最终交付说明 · 中英双语")
     set_font(r, 13, True, MUTED)
 
-    cover = DELIVERY / "02_演示视频" / "FactRelay_Demo_Cover.png"
+    cover = DELIVERY / "02_演示视频" / "FactAtlas_Demo_Cover.png"
     if cover.exists():
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -192,17 +193,16 @@ def build(output: Path) -> None:
     r = p.add_run("所有公开材料已完成；仅姓名、手机号、邮箱和最终授权确认需参赛者本人填写。")
     set_font(r, 9, False, INK)
 
-    add_page_break(doc)
     add_heading_pair(doc, "Official form map", "官方表单字段")
     add_body(doc, "The form has ten required fields. The public fields below are complete; private contact and consent fields stay blank by design.\n\n官方表单共有 10 个必填项。公开字段已完成；私人联系信息和授权确认按设计留空。", MUTED)
     add_field_table(doc, [
-        ("1 · 项目名", "FactRelay"),
+        ("1 · 项目名", "Fact Atlas · 知识星球"),
         ("2 · 队伍成员姓名", "【参赛者填写】队长写第一个"),
         ("3 · 手机号", "【参赛者填写】确保组委会可以联系"),
         ("4 · 邮箱", "【参赛者填写】"),
         ("5 · 赛道", "Gonka: AI for Society"),
         ("6 · Github 链接", REPO),
-        ("7 · 作品体验网址/名称", f"FactRelay — {DEMO}"),
+        ("7 · 作品体验网址/名称", f"Fact Atlas · 知识星球 — {DEMO}"),
         ("8 · 作品介绍/技术说明", "见本文件第 3–5 页，可直接复制中文稿；如表单字数有限，优先复制“一句话介绍 + 中文项目介绍 + 中文技术说明”。"),
         ("9 · 产品演示视频链接", VIDEO_RELEASE + "\n直链：" + VIDEO_DIRECT),
         ("10 · 授权确认", "【参赛者本人阅读并选择】好，我已知晓并同意 / 否，不参赛"),
@@ -238,11 +238,11 @@ def build(output: Path) -> None:
 
     add_heading_pair(doc, "Architecture at a glance", "架构速览", level=2)
     architecture = [
-        ("INPUT", "Text / URL / image · 输入防护与 SSRF 校验", LIME),
-        ("RETRIEVAL", "Public HTML + Google/Bing News RSS · 非 AI 实时证据", YELLOW),
-        ("KIMI", "Investigator + image claim extraction · Gonka 调查方", CYAN),
-        ("MINIMAX", "Adversarial skeptic · Gonka 质疑方", VIOLET_SOFT),
-        ("OUTPUT", "Truth Score + evidence ledger + request receipts · 可追溯输出", PINK),
+        ("RELAY", "Text / URL / image · 主动探索", LIME),
+        ("SIGNALS", "8 agents + public RSS · 每日发现", YELLOW),
+        ("GONKA", "Kimi investigator + ranking · 调查与筛选", CYAN),
+        ("COUNCIL", "MiniMax skeptic + human gate · 质疑与人工门", VIOLET_SOFT),
+        ("ATLAS", "Truth Score + Mapbox globe · 可验证知识地图", PINK),
     ]
     table = doc.add_table(rows=1, cols=5)
     table.style = "Table Grid"
@@ -263,6 +263,8 @@ def build(output: Path) -> None:
         "输入支持文本、公开链接与图片；输出 0–100 Truth Score。",
         "界面展示完整推理轨迹与每一步真实 Gonka Request ID。",
         "检索层不调用其他 AI；失败时不会伪造结论或回执。",
+        "Signals 的 importance 只是值得关注的程度，不会被标成 Truth Score。",
+        "Mapbox 仅负责地球呈现；地点由用户确认，不伪造坐标。",
     ])
 
     add_heading_pair(doc, "Live production proof", "公开站真实运行证明", level=2)
@@ -288,7 +290,7 @@ def build(output: Path) -> None:
 
     add_heading_pair(doc, "Verification report", "交付验收")
     add_field_table(doc, [
-        ("Code quality", "TypeScript clean · 19/19 tests · production build passes"),
+        ("Code quality", "TypeScript clean · 34/34 tests across 9 files · production build passes"),
         ("Dependency audit", "npm audit --audit-level=low · 0 known vulnerabilities"),
         ("Public demo", "HTTP 200 · liveReady=true · browser console clean"),
         ("Video", "150.000s · 1920×1080 · 30fps · H.264 · AAC 48kHz stereo"),

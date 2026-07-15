@@ -33,7 +33,7 @@ The production deployment is connected to GonkaRouter. A final public smoke run 
 | Running product / 在线产品 | <https://factrelay-ai3-2026.yediqizhang37.chatgpt.site> |
 | Public repository / 公开仓库 | <https://github.com/narratorzhang0307/FactRelay> |
 | Demo video release / 演示视频 | <https://github.com/narratorzhang0307/FactRelay/releases/tag/ai3-2026-submission> |
-| Direct 2:30 MP4 / 2分30秒视频直链 | <https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactRelay_Demo_2m30s_Bilingual.mp4> |
+| Direct 2:30 MP4 / 2分30秒视频直链 | <https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactAtlas_Demo_2m30s_Bilingual.mp4> |
 
 ## 中文说明
 

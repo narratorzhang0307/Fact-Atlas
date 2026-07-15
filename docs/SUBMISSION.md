@@ -18,7 +18,7 @@ This file contains public copy that can be pasted into the submission form. Priv
 | Repository / 代码仓库 | <https://github.com/narratorzhang0307/FactRelay> |
 | Running demo / 在线演示 | <https://factrelay-ai3-2026.yediqizhang37.chatgpt.site> |
 | Demo video / 演示视频 | <https://github.com/narratorzhang0307/FactRelay/releases/tag/ai3-2026-submission> |
-| Direct MP4 / 视频直链 | <https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactRelay_Demo_2m30s_Bilingual.mp4> |
+| Direct MP4 / 视频直链 | <https://github.com/narratorzhang0307/FactRelay/releases/download/ai3-2026-submission/FactAtlas_Demo_2m30s_Bilingual.mp4> |
 | Team members / 团队成员 | **PRIVATE — user supplies in the form / 由参赛者填写** |
 | Phone / 手机 | **PRIVATE — user supplies in the form / 由参赛者填写** |
 | Email / 邮箱 | **PRIVATE — user supplies in the form / 由参赛者填写** |

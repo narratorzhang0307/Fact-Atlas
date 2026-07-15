@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the bilingual FactRelay demo-video script as a polished Word document."""
+"""Build the bilingual Fact Atlas demo-video script as a polished Word document."""
 
 from __future__ import annotations
 
@@ -30,119 +30,119 @@ BLUE = "3C49DA"
 SCENES = [
     {
         "number": "01",
-        "time": "00:00–00:12",
-        "title": "Open with the relay deck / 卡组开场",
-        "screen": "Show the full FactRelay hero. Move the cursor to the compact arrows and flip Sources → Challenge → Proof once. Let the colored card layers remain visible.",
-        "narration": "AI 事实核查不应该要求我们再相信另一个黑盒。FactRelay 把每次核查拆成一叠可以翻看的证据区块。",
+        "time": "00:00–00:14",
+        "title": "Frame the problem and product / 问题与产品开场",
+        "screen": "Open on the mobile Fact Atlas shell and show the three bottom tabs: Relay, Atlas, and Signals. Hold long enough to read the bilingual product promise.",
+        "narration": "个人知识库最危险的，不是缺少信息，而是把未经验证的说法当成事实。Fact Atlas 用三个标签连接两条路径：主动探索，与每日发现。",
         "subtitles": [
-            ("00:00.000 → 00:05.800", "AI fact checking should not replace one black box with another."),
-            ("00:05.800 → 00:12.000", "FactRelay turns each investigation into a navigable evidence chain."),
+            ("00:00.000 → 00:06.500", "A personal knowledge base fails when unverified claims quietly become facts."),
+            ("00:06.500 → 00:14.000", "Fact Atlas connects active exploration and daily discovery in three tabs."),
         ],
         "color": VIOLET,
     },
     {
         "number": "02",
-        "time": "00:12–00:27",
-        "title": "Submit any public claim / 提交主张",
-        "screen": "Show the Text, Link, and Image tabs. Click each tab once, return to Text, then choose the Great Wall starter.",
-        "narration": "用户可以提交原始文本、公开文章链接或社交媒体截图。实时运行会先提取准确主张，再检索当前公开资料。",
+        "time": "00:14–00:30.5",
+        "title": "Show both knowledge paths / 展示两条知识路径",
+        "screen": "Show Relay text/link/image inputs, then switch to Signals and pan across the eight topic-agent chips and the daily brief.",
+        "narration": "在 Relay，你可以提交文本、公开链接或截图，发起一次深度核验。在 Signals，八个主题 Agent 每天扫描全球公开新闻。",
         "subtitles": [
-            ("00:12.000 → 00:19.500", "Submit text, a public link, or a social-media screenshot."),
-            ("00:19.500 → 00:27.000", "A live run extracts the claim, then retrieves current public evidence."),
+            ("00:14.000 → 00:22.000", "Relay accepts text, a public link, or a screenshot for deep verification."),
+            ("00:22.000 → 00:30.500", "Eight Signals agents scan global public news every day."),
         ],
         "color": LIME,
     },
     {
         "number": "03",
-        "time": "00:27–00:41",
-        "title": "Start one live case / 启动实时核查",
-        "screen": "Use the claim “The Great Wall of China is visible from the Moon with the naked eye.” Click Run verification and briefly show the live progress state.",
-        "narration": "这里核查一条常见说法：人类能从月球上肉眼看到长城。FactRelay 先收集证据，再依次调用两位 Gonka 模型。",
+        "time": "00:30.5–00:46.5",
+        "title": "Rank, then verify / 先筛选，再核验",
+        "screen": "Hold on the live Gonka Signals receipt and importance label. Select one signal with Deep verify and show it arriving in Relay.",
+        "narration": "第一道 Gonka 筛选只判断重要性，并保留请求回执；它不冒充真实度。你选中一条候选后，它才进入 FactRelay 的证据检索与交叉验证。",
         "subtitles": [
-            ("00:27.000 → 00:33.800", "We test the familiar claim that the Great Wall is visible from the Moon."),
-            ("00:33.800 → 00:41.000", "FactRelay collects evidence before calling two Gonka models in sequence."),
+            ("00:30.500 → 00:38.500", "Gonka ranks importance and keeps a receipt; importance is never presented as truth."),
+            ("00:38.500 → 00:46.500", "A selected signal then enters FactRelay evidence retrieval and cross-checking."),
         ],
         "color": CYAN,
     },
     {
         "number": "04",
-        "time": "00:41–00:58",
-        "title": "Read the verdict, not just the number / 读取结论",
-        "screen": "Land on Block 01. Hold on the Truth Score, verdict seal, confidence bar, and four score signals.",
-        "narration": "结果是事实不符，并给出一项可复算的真实度评分。这个数字不是模型随口生成的，而是由可测试代码根据模型共识和来源加权证据确定计算。",
+        "time": "00:46.5–01:03",
+        "title": "Inspect evidence and deterministic score / 证据与确定性评分",
+        "screen": "Show the numbered source ledger, then the Truth Score and its model-consensus/source-evidence breakdown.",
+        "narration": "每条公开来源都保留发布者、日期、链接、立场和可信度。Truth Score 由确定性代码计算，不由任何模型随口给分。",
         "subtitles": [
-            ("00:41.000 → 00:48.500", "The verdict is Refuted, with a deterministic Truth Score."),
-            ("00:48.500 → 00:58.000", "The score is deterministic: model consensus plus source-weighted evidence."),
+            ("00:46.500 → 00:55.000", "Every source keeps its publisher, date, URL, stance, and reliability."),
+            ("00:55.000 → 01:03.000", "Truth Score is calculated by deterministic code, not generated by a model."),
         ],
         "color": PINK,
     },
     {
         "number": "05",
-        "time": "00:58–01:16",
-        "title": "Inspect the evidence ledger / 检查证据账本",
-        "screen": "Use the right arrow to open Block 02 Sources. Point to publisher, date, URL, stance, reliability, and source number. Open one public source only if it is fast and reliable.",
-        "narration": "每条证据都保留发布者、日期、原始链接、立场和可信度。模型只能引用这份编号清单，伪造或越界的来源编号会被拒绝。",
+        "time": "01:03–01:19.5",
+        "title": "Preserve disagreement and responsibility / 保留分歧与责任",
+        "screen": "Show the source-index validation note, then open Evidence Council and pause on its four-role flow.",
+        "narration": "无效来源编号会被拒绝，模型分歧也会原样保留。Evidence Council 把记录、调查、质疑和人工确认分成四个清晰责任。",
         "subtitles": [
-            ("00:58.000 → 01:07.000", "Every source keeps its publisher, date, URL, stance, and reliability."),
-            ("01:07.000 → 01:16.000", "Models may cite only this numbered ledger; invalid source indexes are rejected."),
+            ("01:03.000 → 01:11.500", "Invalid source indexes are rejected, and model disagreement stays visible."),
+            ("01:11.500 → 01:19.500", "Evidence Council separates clerk, investigator, skeptic, and human gate."),
         ],
         "color": YELLOW,
     },
     {
         "number": "06",
-        "time": "01:16–01:36",
+        "time": "01:19.5–01:36.5",
         "title": "Compare adversarial models / 比较双模型",
-        "screen": "Flip to Block 03 Review. Pause on the lime Kimi investigator card and violet MiniMax skeptic card, then show their reasoning bullets and confidence values.",
-        "narration": "Kimi-K2.6 担任调查方，先形成证据判断；MiniMax-M2.7 担任质疑方，专门寻找循环引用、时间错位、因果跳跃和遗漏背景。分歧不会被隐藏。",
+        "screen": "Pause on the lime Kimi investigator card and violet MiniMax skeptic card, including their bilingual reasoning bullets.",
+        "narration": "Kimi-K2.6 担任调查方，先形成基于证据的判断。MiniMax-M2.7 担任质疑方，专查循环引用、时间错位和遗漏背景。",
         "subtitles": [
-            ("01:16.000 → 01:25.500", "Kimi-K2.6 investigates and forms the first evidence-based judgment."),
-            ("01:25.500 → 01:36.000", "MiniMax-M2.7 challenges it for source laundering, chronology errors, and missing context."),
+            ("01:19.500 → 01:28.000", "Kimi-K2.6 forms the first evidence-based investigation."),
+            ("01:28.000 → 01:36.500", "MiniMax-M2.7 challenges circular reporting, chronology, and missing context."),
         ],
         "color": VIOLET,
     },
     {
         "number": "07",
-        "time": "01:36–01:54",
+        "time": "01:36.5–01:53",
         "title": "Keep the real receipts / 保留真实回执",
-        "screen": "Flip to Block 04 Proof. Zoom only enough for the real non-null Gonka Request IDs to be readable. Follow the execution order once.",
-        "narration": "每次推理都保留 Gonka 上游 Request ID 和执行顺序。回执证明哪次请求生成了分析，但不冒充事实本身的证明；事实仍由可检查的证据支持。",
+        "screen": "Show the Proof block with non-null request IDs, then cut to the Gonka-only architecture boundary.",
+        "narration": "每次推理都保留 Gonka 上游 Request ID 和执行顺序。所有语义推理只通过 GonkaRouter；回执证明调用来源，不等于证明事实。",
         "subtitles": [
-            ("01:36.000 → 01:44.500", "Every inference preserves its upstream Gonka Request ID and execution order."),
-            ("01:44.500 → 01:54.000", "A receipt proves which call produced the analysis—not whether the claim is true."),
+            ("01:36.500 → 01:45.000", "Every inference preserves its upstream Gonka Request ID and order."),
+            ("01:45.000 → 01:53.000", "All inference uses GonkaRouter; a receipt proves provenance, not truth."),
         ],
         "color": CYAN,
     },
     {
         "number": "08",
-        "time": "01:54–02:10",
-        "title": "Show the trust boundary / 展示可信边界",
-        "screen": "Switch to the GitHub README architecture section or a prepared architecture graphic. Highlight Gonka-only inference, deterministic scoring, SSRF protection, and null preview receipts.",
-        "narration": "所有语义推理只通过 GonkaRouter。检索不依赖其他 AI；评分是确定性代码；链接会经过 SSRF 防护；预览数据绝不伪造真实回执。",
+        "time": "01:53–02:11",
+        "title": "Human gate to the Mapbox Atlas / 人工门与知识地球",
+        "screen": "Confirm a Nominatim place candidate, switch to Atlas, and reveal the bright score marker on the dark Mapbox globe.",
+        "narration": "最终由用户决定什么进入知识星球，并亲自确认地点候选。Atlas 使用深色 Mapbox 地球，让亮色事实节点和可解释关联一眼可见。",
         "subtitles": [
-            ("01:54.000 → 02:02.000", "All semantic inference runs exclusively through GonkaRouter."),
-            ("02:02.000 → 02:10.000", "Tested scoring, SSRF guards, and null preview receipts make the boundary explicit."),
+            ("01:53.000 → 02:01.000", "The user decides what enters the Atlas and confirms the place candidate."),
+            ("02:01.000 → 02:11.000", "A dark Mapbox globe makes bright fact nodes and explainable links visible."),
         ],
         "color": LIME,
     },
     {
         "number": "09",
-        "time": "02:10–02:24",
-        "title": "Return to the complete chain / 回到完整链路",
-        "screen": "Return to the product. Click the four block index buttons in order: Verdict → Sources → Review → Proof. End on the full card stack.",
-        "narration": "从结论、来源、审查到回执，每一张卡都是可翻看、可追溯的证据区块。用户看到的不只是答案，而是一条能够复核的链路。",
+        "time": "02:11–02:25",
+        "title": "Keep uncertainty honest / 诚实保留不确定性",
+        "screen": "Show the unplaced-orbit state and browser-local privacy copy, then return to the complete Atlas node detail.",
+        "narration": "没有可靠地点的知识会留在未落位轨道；系统绝不伪造坐标。完整证据快照只保存在当前浏览器，形成可回看的私人知识谱系。",
         "subtitles": [
-            ("02:10.000 → 02:17.000", "Verdict, Sources, Review, and Proof remain individually inspectable."),
-            ("02:17.000 → 02:24.000", "The user receives a reviewable chain—not just an answer."),
+            ("02:11.000 → 02:19.000", "Knowledge without a reliable place remains unplaced; coordinates are never invented."),
+            ("02:19.000 → 02:25.000", "The evidence snapshot stays browser-local as a private knowledge lineage."),
         ],
         "color": YELLOW,
     },
     {
         "number": "10",
-        "time": "02:24–02:30",
+        "time": "02:25–02:30",
         "title": "Close / 收尾",
-        "screen": "Return to the hero. Hold on the FactRelay name, tagline, public demo URL, and GitHub URL.",
-        "narration": "FactRelay：质疑主张，保留回执。",
-        "subtitles": [("02:24.000 → 02:30.000", "FactRelay. Question the claim. Keep the receipts.")],
+        "screen": "Hold on the Fact Atlas name, tagline, public demo URL, and GitHub URL.",
+        "narration": "Fact Atlas：构建你的知识世界，让每条事实都保留回执。",
+        "subtitles": [("02:25.000 → 02:30.000", "Fact Atlas. Build a knowledge world. Every fact keeps receipts.")],
         "color": PINK,
     },
 ]
@@ -216,7 +216,7 @@ def set_table_geometry(table, widths: list[int], indent: int = 120) -> None:
             cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
 
-def set_font(run, size: float | None = None, bold: bool | None = None, color: str | None = None, name: str = "Arial Unicode MS") -> None:
+def set_font(run, size: float | None = None, bold: bool | None = None, color: str | None = None, name: str = "Source Han Serif CN") -> None:
     run.font.name = name
     r_fonts = run._element.get_or_add_rPr().rFonts
     for key in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
@@ -285,9 +285,9 @@ def configure_document(doc: Document) -> None:
     section.right_margin = Inches(1)
 
     normal = doc.styles["Normal"]
-    normal.font.name = "Arial Unicode MS"
+    normal.font.name = "Source Han Serif CN"
     for key in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
-        normal._element.rPr.rFonts.set(qn(key), "Arial Unicode MS")
+        normal._element.rPr.rFonts.set(qn(key), "Source Han Serif CN")
     normal.font.size = Pt(10.5)
     normal.font.color.rgb = RGBColor.from_string(INK)
     normal.paragraph_format.space_after = Pt(6)
@@ -300,9 +300,9 @@ def configure_document(doc: Document) -> None:
         ("Heading 3", 11, INK, 10, 5),
     ):
         style = doc.styles[name]
-        style.font.name = "Arial Unicode MS"
+        style.font.name = "Source Han Serif CN"
         for key in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
-            style._element.rPr.rFonts.set(qn(key), "Arial Unicode MS")
+            style._element.rPr.rFonts.set(qn(key), "Source Han Serif CN")
         style.font.size = Pt(size)
         style.font.bold = True
         style.font.color.rgb = RGBColor.from_string(color)
@@ -315,7 +315,7 @@ def configure_document(doc: Document) -> None:
     hp = header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
     hp.paragraph_format.space_after = Pt(4)
-    r = hp.add_run("FACTRELAY  /  DEMO PRODUCTION BOOK  ·  演示视频制作手册")
+    r = hp.add_run("FACT ATLAS  /  DEMO PRODUCTION BOOK  ·  演示视频制作手册")
     set_font(r, 7.5, True, MUTED)
     set_paragraph_border(hp, color="B7BAB5", size=6)
 
@@ -328,10 +328,10 @@ def configure_document(doc: Document) -> None:
     set_font(r, 7.5, True, MUTED)
     add_field(fp, "PAGE")
 
-    doc.core_properties.title = "FactRelay 演示视频字幕与分镜"
+    doc.core_properties.title = "Fact Atlas 演示视频字幕与分镜"
     doc.core_properties.subject = "AI³ Growth Hackathon 2026 · Track 3"
-    doc.core_properties.author = "FactRelay"
-    doc.core_properties.keywords = "FactRelay, Gonka, demo video, subtitles, AI fact checking"
+    doc.core_properties.author = "Fact Atlas"
+    doc.core_properties.keywords = "Fact Atlas, FactRelay, Gonka, Mapbox, demo video, subtitles, AI fact checking"
 
 
 def build_doc(output: Path) -> None:
@@ -345,7 +345,7 @@ def build_doc(output: Path) -> None:
 
     title = doc.add_paragraph(style="Title")
     title.paragraph_format.space_after = Pt(4)
-    r = title.add_run("FactRelay")
+    r = title.add_run("Fact Atlas")
     set_font(r, 31, True, INK)
     subtitle = doc.add_paragraph()
     subtitle.paragraph_format.space_after = Pt(3)
@@ -468,18 +468,20 @@ def build_doc(output: Path) -> None:
     doc.add_page_break()
     doc.add_heading("Pronunciation and on-screen terms / 发音与术语", level=1)
     terms = [
-        ("FactRelay", "“Fact Relay”; two English words spoken naturally / 两个英文词自然连读"),
+        ("Fact Atlas", "“Fact Atlas”; two English words spoken naturally / 两个英文词自然连读"),
         ("Gonka", "Keep the product name visible while it is spoken / 发音时画面保留 Gonka 名称"),
         ("Kimi-K2.6", "“Kimi K two point six”"),
         ("MiniMax-M2.7", "“MiniMax M two point seven”"),
         ("Truth Score", "Chinese narration may say 真实度评分; keep the English UI term visible"),
         ("Request ID", "Chinese narration may say 请求回执; keep the real ID readable"),
+        ("Mapbox", "Keep the official name in English; it is the Atlas basemap, not an inference provider"),
     ]
     term_table = doc.add_table(rows=len(terms), cols=2)
     term_table.style = "Table Grid"
     set_table_geometry(term_table, [2200, 7160])
     for idx, (term, note) in enumerate(terms):
-        shade(term_table.cell(idx, 0), [LIME, CYAN, YELLOW, VIOLET_SOFT, PINK, PAPER][idx])
+        term_colors = [LIME, CYAN, YELLOW, VIOLET_SOFT, PINK, PAPER]
+        shade(term_table.cell(idx, 0), term_colors[idx % len(term_colors)])
         set_font(term_table.cell(idx, 0).paragraphs[0].add_run(term), 9.5, True, INK)
         set_font(term_table.cell(idx, 1).paragraphs[0].add_run(note), 9.2, False, INK)
 
