@@ -8,6 +8,7 @@ import {
 import { verifyClaim } from "../server/verify.mjs";
 import { geocodePlace } from "../server/geocode.mjs";
 import { getDailySignals } from "../server/signals.mjs";
+import { getMapboxConfig } from "../server/map-config.mjs";
 
 const MAX_BODY_BYTES = 7_500_000;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -87,6 +88,7 @@ const worker = {
       if (request.method === "GET" && url.pathname === "/api/geocode") {
         return json({ candidates: await geocodePlace(url.searchParams.get("q")) });
       }
+      if (request.method === "GET" && url.pathname === "/api/map-config") return json(getMapboxConfig(env));
       if (request.method === "GET" && url.pathname === "/api/signals") {
         enforceRateLimit(request);
         return json(await getDailySignals(url.searchParams.get("topic") || "ai", env));

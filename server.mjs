@@ -14,6 +14,7 @@ import {
 import { verifyClaim } from "./server/verify.mjs";
 import { geocodePlace } from "./server/geocode.mjs";
 import { getDailySignals } from "./server/signals.mjs";
+import { getMapboxConfig } from "./server/map-config.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST = resolve(ROOT, "dist");
@@ -118,6 +119,10 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "GET" && url.pathname === "/api/geocode") {
       sendJson(response, 200, { candidates: await geocodePlace(url.searchParams.get("q")) });
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/map-config") {
+      sendJson(response, 200, getMapboxConfig(process.env));
       return;
     }
     if (request.method === "GET" && url.pathname === "/api/signals") {

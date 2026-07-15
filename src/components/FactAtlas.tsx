@@ -1,9 +1,8 @@
 import { Check, ChevronLeft, ChevronRight, ExternalLink, Globe2, MapPin, Orbit, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   buildAtlasLinks,
   loadAtlasNodes,
-  projectToGlobe,
   removeAtlasNode,
   saveAtlasNode,
   subscribeAtlas,
@@ -12,6 +11,8 @@ import {
   type AtlasPlacement,
 } from "../atlas";
 import type { VerificationResult } from "../types";
+
+const AtlasMapboxGlobe = lazy(() => import("./AtlasMapboxGlobe").then((module) => ({ default: module.AtlasMapboxGlobe })));
 
 interface GeocodeCandidate {
   id: string;
@@ -66,11 +67,6 @@ export function FactAtlas({ currentResult, onOpenResult }: Props) {
   }, [currentResult?.id, currentResult?.claim]);
 
   const links = useMemo(() => buildAtlasLinks(nodes), [nodes]);
-  const projected = useMemo(() => new Map(nodes.flatMap((node) => {
-    if (!node.placement) return [];
-    const point = projectToGlobe(node.placement, centerLng);
-    return [[node.id, point] as const];
-  })), [nodes, centerLng]);
   const selected = nodes.find((node) => node.id === selectedId) || null;
   const currentSaved = currentResult ? nodes.some((node) => node.id === currentResult.id) : false;
   const placedCount = nodes.filter((node) => node.placement).length;
@@ -135,53 +131,9 @@ export function FactAtlas({ currentResult, onOpenResult }: Props) {
           </div>
 
           <div className="atlas-globe-wrap">
-            <svg className="atlas-globe" viewBox="0 0 600 600" role="img" aria-label="Interactive globe of verified fact nodes · 已核验事实节点地球">
-              <defs>
-                <radialGradient id="atlas-ocean" cx="35%" cy="28%" r="78%">
-                  <stop offset="0" stopColor="#38374d" />
-                  <stop offset=".58" stopColor="#181914" />
-                  <stop offset="1" stopColor="#090a08" />
-                </radialGradient>
-                <clipPath id="atlas-sphere"><circle cx="300" cy="300" r="232" /></clipPath>
-              </defs>
-              <circle cx="312" cy="315" r="232" fill="#7865ff" opacity=".92" />
-              <circle cx="300" cy="300" r="232" fill="url(#atlas-ocean)" stroke="#f8f7f2" strokeWidth="3" />
-              <g clipPath="url(#atlas-sphere)" className="atlas-grid-lines">
-                {[128, 206, 300, 394, 472].map((cy, index) => <ellipse key={`lat-${cy}`} cx="300" cy={cy} rx={Math.sqrt(Math.max(0, 232 ** 2 - (cy - 300) ** 2))} ry={index === 2 ? 0 : 18} />)}
-                {[-62, -31, 0, 31, 62].map((rotation) => <ellipse key={`lng-${rotation}`} cx="300" cy="300" rx="72" ry="232" transform={`rotate(${rotation} 300 300)`} />)}
-                <path className="atlas-land" d="M208 142l48 18 30 39-16 32 26 36-22 35-53-13-25-38-42-24 12-47zM340 154l61 8 35 32-7 42 31 24-18 35-43-2-27 45-17 63-39 10-28-41 14-39-23-41 23-28 6-48zM410 386l52 24 19 48-31 38-58-11-17-52z" />
-              </g>
-
-              {links.map((link) => {
-                const from = projected.get(link.from);
-                const to = projected.get(link.to);
-                if (!from?.visible || !to?.visible) return null;
-                return <line key={`${link.from}-${link.to}`} className={`atlas-link atlas-link-${link.kind}`} x1={300 + from.x * 232} y1={300 + from.y * 232} x2={300 + to.x * 232} y2={300 + to.y * 232} />;
-              })}
-
-              {nodes.map((node) => {
-                const point = projected.get(node.id);
-                if (!point?.visible) return null;
-                const x = 300 + point.x * 232;
-                const y = 300 + point.y * 232;
-                const color = VERDICT_COLOR[node.result.verdict];
-                return (
-                  <g key={node.id} className={`atlas-node ${selectedId === node.id ? "selected" : ""}`} transform={`translate(${x} ${y})`} onClick={() => setSelectedId(node.id)} role="button" tabIndex={0} aria-label={`${node.result.claim} — ${node.placement?.label}`}>
-                    <circle r="19" fill={color} opacity=".2" />
-                    <circle r="9" fill={color} stroke="#11120f" strokeWidth="3" />
-                    <text x="14" y="-13">{node.result.truthScore}</text>
-                  </g>
-                );
-              })}
-            </svg>
-
-            {!placedCount && (
-              <div className="atlas-empty-globe">
-                <MapPin size={22} />
-                <strong>No fabricated coordinates · 不伪造坐标</strong>
-                <span>Confirm a place below, or keep the fact in orbit. · 在下方确认地点，或把事实留在轨道。</span>
-              </div>
-            )}
+            <Suspense fallback={<div className="atlas-mapbox-fallback"><div className="atlas-fallback-sphere" /><Orbit size={20} /><strong>Loading dark knowledge globe… · 正在加载深色知识地球</strong></div>}>
+              <AtlasMapboxGlobe nodes={nodes} links={links} selectedId={selectedId} centerLng={centerLng} onSelect={setSelectedId} />
+            </Suspense>
 
             {unplaced.length > 0 && (
               <div className="atlas-orbit" aria-label="Unplaced facts · 未落位事实">

@@ -835,6 +835,23 @@ main { width: 100%; }
 .atlas-toolbar button:hover { border-color: var(--black); background: var(--lime); color: var(--black); }
 .atlas-toolbar code { min-width: 46px; color: rgba(255,255,255,.58); font-size: 8px; text-align: center; }
 .atlas-globe-wrap { min-height: 630px; position: relative; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 45%, rgba(120,101,255,.16), transparent 54%); }
+.atlas-mapbox-stage, .atlas-mapbox-canvas { position: absolute; inset: 0; }
+.atlas-mapbox-stage { overflow: hidden; background: radial-gradient(circle at 50% 44%, #252829 0, #101311 52%, #090a08 100%); }
+.atlas-mapbox-canvas { z-index: 1; }
+.atlas-mapbox-stage .mapboxgl-canvas { outline: none; }
+.atlas-mapbox-stage .mapboxgl-ctrl-bottom-right { z-index: 8; opacity: .66; }
+.atlas-mapbox-stage .mapboxgl-ctrl-attrib { border: 1px solid rgba(255,255,255,.14); border-radius: 8px 0 0; background: rgba(9,10,8,.72); color: rgba(255,255,255,.7); font-size: 8px; backdrop-filter: blur(10px); }
+.atlas-mapbox-stage .mapboxgl-ctrl-attrib a { color: var(--lime); }
+.atlas-mapbox-fallback { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,.7); text-align: center; pointer-events: none; }
+.atlas-mapbox-fallback > svg { color: var(--lime); }
+.atlas-mapbox-fallback strong { max-width: 310px; color: var(--white); font-size: 11px; }
+.atlas-mapbox-fallback span { max-width: 290px; font-size: 8px; line-height: 1.5; }
+.atlas-fallback-sphere { width: min(380px, 64%); aspect-ratio: 1; position: absolute; z-index: -1; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: repeating-radial-gradient(ellipse at 50% 50%, transparent 0 30px, rgba(184,255,92,.08) 31px 32px), radial-gradient(circle at 35% 28%, rgba(120,101,255,.4), #171a18 62%, #080907); box-shadow: 14px 14px 0 rgba(120,101,255,.72); }
+.atlas-mapbox-badge { position: absolute; top: 15px; right: 15px; z-index: 6; padding: 8px 10px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(9,10,8,.72); color: var(--lime); font: 750 7px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; backdrop-filter: blur(12px); }
+.atlas-map-marker { width: 44px; height: 50px; padding: 0; display: grid; place-items: center; position: relative; border: 2px solid var(--black); border-radius: 15px 15px 15px 4px; background: var(--marker-color); color: var(--black); box-shadow: 4px 4px 0 var(--black), 0 0 0 1px rgba(255,255,255,.28); cursor: pointer; transform: rotate(-5deg); transition: transform .16s, box-shadow .16s; }
+.atlas-map-marker::after { content: ""; width: 8px; height: 8px; position: absolute; left: 5px; bottom: -5px; border: solid var(--black); border-width: 0 0 2px 2px; background: var(--marker-color); transform: rotate(-45deg); }
+.atlas-map-marker span { font: 900 12px ui-monospace, SFMono-Regular, Menlo, monospace; transform: rotate(5deg); }
+.atlas-map-marker:hover, .atlas-map-marker.selected { z-index: 2; transform: translateY(-4px) rotate(-5deg) scale(1.08); box-shadow: 6px 8px 0 var(--black), 0 0 0 3px var(--white); }
 .atlas-globe { width: min(650px, 92%); height: auto; overflow: visible; }
 .atlas-grid-lines ellipse { fill: none; stroke: rgba(248,247,242,.16); stroke-width: 1.2; }
 .atlas-grid-lines ellipse:nth-child(3) { stroke: rgba(184,255,92,.28); }
@@ -846,11 +863,11 @@ main { width: 100%; }
 .atlas-node circle { transition: r .16s, opacity .16s; }
 .atlas-node:hover circle:first-child, .atlas-node.selected circle:first-child { r: 28px; opacity: .4; }
 .atlas-node text { fill: var(--white); font: 800 12px ui-monospace, SFMono-Regular, Menlo, monospace; paint-order: stroke; stroke: var(--black); stroke-width: 4px; stroke-linejoin: round; }
-.atlas-empty-globe { max-width: 260px; position: absolute; display: flex; flex-direction: column; align-items: center; gap: 7px; color: rgba(255,255,255,.72); text-align: center; pointer-events: none; }
+.atlas-empty-globe { max-width: 260px; position: absolute; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 18px; border: 1px solid rgba(255,255,255,.16); border-radius: 18px; background: rgba(9,10,8,.72); color: rgba(255,255,255,.72); text-align: center; pointer-events: none; backdrop-filter: blur(12px); }
 .atlas-empty-globe svg { color: var(--lime); }
 .atlas-empty-globe strong { color: var(--white); font-size: 11px; }
 .atlas-empty-globe span { font-size: 8px; line-height: 1.5; }
-.atlas-orbit { position: absolute; inset: 0; pointer-events: none; }
+.atlas-orbit { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
 .atlas-orbit button { width: 34px; height: 34px; position: absolute; border: 1px solid var(--white); border-radius: 50%; background: var(--violet); color: var(--white); font-size: 8px; font-weight: 850; pointer-events: auto; cursor: pointer; }
 .atlas-legend { min-height: 56px; padding: 10px 16px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px 18px; border-top: 1px solid rgba(255,255,255,.18); }
 .atlas-legend span { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.58); font-size: 7px; text-transform: uppercase; }
