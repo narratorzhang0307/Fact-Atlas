@@ -34,6 +34,8 @@ OSS stores one public, read-only JSON object per UTC date at `${SIGNAL_CACHE_BAS
 
 Before returning even one topic, the loader requires all eight editions to retain matching dates and topics, one to five bilingual cards, public source URLs, a non-empty Gonka Request ID, and a completed `GonkaRouter` trace step. OSS contains no credentials and no private Atlas records. It improves availability; it does not certify the truth of a card.
 
+The cache root must use HTTPS outside loopback development, redirects are rejected, and responses larger than 5 MB are discarded. Public source links must use HTTP(S) without embedded credentials. Simultaneous requests for several topics on one date await one shared bundle download, then receive isolated structured clones. A live-inference rate-limit token is consumed only after OSS, embedded snapshot, and process-memory lookups miss.
+
 ## Snapshot contract
 
 Every topic file must satisfy all of these checks before it can be compiled:

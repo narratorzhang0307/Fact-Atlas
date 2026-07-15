@@ -16,7 +16,10 @@ Please open a private GitHub security advisory for this repository. Do not inclu
 - Images are restricted by media type and size.
 - Model source indexes are validated before scoring.
 - Atlas history is browser-local and is not uploaded by the application server.
+- Atlas nodes and Signals device-buffer entries are schema-checked again when read from browser storage; malformed timestamps, score ranges, record IDs, coordinates, and non-HTTP(S) source links are rejected.
 - The OSS cache contains only validated public Signals editions. It never stores user claims, Atlas history, API keys, or OSS write credentials.
+- OSS roots require HTTPS outside loopback development, redirects are rejected, payload size is bounded, and concurrent reads of one date are coalesced.
+- Public verification and live Signals inference share a six-runs-per-ten-minutes client limit in both production runtimes. The limiter retains at most 10,000 client keys and returns `Retry-After` on rejection.
 - The service worker never caches `/api/*` responses.
 - Production listens on a loopback port and is exposed only through the dedicated Nginx virtual host.
 

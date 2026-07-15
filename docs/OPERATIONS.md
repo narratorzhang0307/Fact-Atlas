@@ -17,7 +17,9 @@ For the currently published Signals date, verify the object layer without exposi
 curl -fsS 'https://fact-atlas.throughtheglass.art/api/signals?topic=finance&date=2026-07-15'
 ```
 
-The response should report `cacheLayer: "oss"`, `cacheHit: true`, the original `requestId`, and at least one completed `GonkaRouter` trace step. A cache miss is allowed to fall through; it must not be relabeled as an OSS hit.
+The response should report `cacheLayer: "oss"`, `cacheHit: true`, the original `requestId`, and at least one completed `GonkaRouter` trace step. The response headers also expose `X-Fact-Atlas-Cache` and `X-Fact-Atlas-Edition`, so cache provenance can be checked without parsing the body. A cache miss is allowed to fall through; it must not be relabeled as an OSS hit.
+
+Public verification and uncached live Signals ranking share a fixed budget of six inference starts per client per ten minutes. OSS, embedded-snapshot, and process-memory hits do not consume this budget. A rejected request returns HTTP `429`, code `RATE_LIMITED`, and `Retry-After`; do not disable the limiter to work around provider errors.
 
 ## Routine release
 
@@ -50,6 +52,7 @@ Before sharing logs, remove user-submitted claims, remote page excerpts, request
 | Atlas has no basemap | Mapbox public token or Mapbox network access | `/api/map-config` and browser console |
 | Installed app shows old shell | Service-worker update lifecycle | manifest/SW cache headers and cache version |
 | Signals is empty | OSS miss/invalid object, embedded snapshot miss, date window, RSS availability, or Gonka ranking | `cacheLayer`, `/api/signals?...` response, and trace |
+| HTTP 429 `RATE_LIMITED` | Product inference budget exhausted for one client | honor `Retry-After`; confirm cached Signals still bypass live inference |
 
 ## Security-sensitive incidents
 

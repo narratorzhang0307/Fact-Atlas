@@ -88,6 +88,8 @@ The first-stage `importance` score is explicitly not a Truth Score. It prioritiz
 
 Snapshots do not bypass inference. They preserve the output of an earlier completed Gonka ranking, including its request ID, trace, generation time, and source URLs. A checked-in snapshot is immutable for its date. Runtime in-memory caching is a separate, shorter-lived layer. See [`SIGNALS.md`](SIGNALS.md) for the generation and validation contract.
 
+Concurrent reads for different topics on the same date share one in-flight OSS bundle request. The complete eight-topic object is validated before any one topic is returned. A live-inference rate-limit token is consumed only after OSS, embedded-snapshot, and process-memory lookups all miss.
+
 ### Text claim
 
 ```text
@@ -227,6 +229,15 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 - Images are restricted to PNG/JPEG/WebP and approximately 5 MB.
 - The API key never enters browser code or the health response.
 - `/api/map-config` exposes only a browser-safe Mapbox `pk.` public token; it never accepts or returns a secret Mapbox token.
+- Public verification and live Signals inference share a fixed client budget of six starts per ten minutes. The self-hosted Node process keys trusted Nginx forwarding metadata; Sites uses Cloudflare's connecting IP header.
+- Rate-limit state is process-local, retains at most 10,000 client keys, and returns a bounded `Retry-After` value without exposing request content.
+
+### Browser-local knowledge data
+
+- Signals editions expire after 72 hours and are capped at 24 topic/date records.
+- Cache timestamps, topic/date identity, bilingual fields, score ranges, and source URL schemes are checked on every read.
+- Atlas records must contain a matching node/result ID, valid verdict and score bounds, evidence arrays, trace arrays, and either a user-confirmed valid coordinate or an explicit unplaced state.
+- Corrupt local records are ignored; the application does not reinterpret or upload them.
 
 ### Atlas placement and mapping
 
@@ -267,6 +278,7 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 | Invalid model JSON | Stop with a structured verification failure, never invent a verdict |
 | One malformed model response | Retry the same Gonka model once with a strict JSON-only instruction; preserve the failed call as a `partial` trace step |
 | Provider rate limit | Return `GONKA_RATE_LIMITED` |
+| Product inference limit | Return `RATE_LIMITED` with `Retry-After` |
 | 180-second timeout | Return `VERIFICATION_TIMEOUT` |
 | Too few sources | Label `insufficient` and cap confidence |
 

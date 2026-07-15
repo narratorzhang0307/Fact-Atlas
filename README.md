@@ -48,6 +48,7 @@ Fact Atlas 把个人知识形成过程拆成三层：
 | 最终分数是否由模型编写？ | 否。模型只返回有边界的判断，Truth Score 由确定性代码计算 | [`server/scoring.mjs`](server/scoring.mjs) |
 | 证据从哪里来？ | 提交页面、Google News RSS、Bing News RSS 等公开来源；检索层本身不调用其他 AI | [`server/evidence.mjs`](server/evidence.mjs) |
 | 如何防止模型伪造引用？ | 模型只能引用编号来源；不存在的 `sourceIndex` 在评分前被拒绝 | [`server/json.mjs`](server/json.mjs) 与测试 |
+| 如何保护公开推理配额？ | Node 正式站与 Sites Worker 共用有内存上限的固定窗口限流；OSS/快照命中不消耗实时推理额度 | [`server/rate-limit.mjs`](server/rate-limit.mjs) |
 | Request ID 证明什么？ | 只证明哪一次 Gonka 请求生成了分析，不被宣称为事实真实性证明 | API 返回的 `trace` 与 `models[].requestId` |
 | 私人知识存在哪里？ | 完整 Atlas 快照只保存在当前浏览器，不上传私人历史数据库 | [`src/atlas.ts`](src/atlas.ts) |
 | 地点由谁决定？ | Nominatim 只给候选，必须由用户点击确认；无法可靠定位的内容留在“未落位轨道” | [`src/components/FactAtlas.tsx`](src/components/FactAtlas.tsx) |
@@ -484,7 +485,11 @@ session memory → 72-hour device buffer → Signals API
 
 OSS 每个 UTC 日期只保存一个只读 JSON 对象，内部包含八个主题。服务端只读取最近三个 UTC 日期，并在返回任何主题前重新校验八份简报的日期、双语字段、公开来源、Gonka Request ID 和完成态 trace。对象缺失、超时或验证失败时会自动回退，不会把 OSS 可用性当成事实可靠性。
 
+同一日期的并发主题请求会合并为一次 OSS 下载，避免首次预取八个主题时重复拉取同一个日期包。缓存根地址必须使用 HTTPS（仅本机开发允许 HTTP），卡片来源只接受不含嵌入凭据的 HTTP(S) URL。
+
 设备缓冲最多保留 24 份日期主题简报，刚好对应三天 × 八个主题。它使用每份简报原始的 Gonka Request ID、来源与日期，超过 72 小时自动失效；设备缓冲未命中时才请求服务端。
+
+从 `localStorage` 恢复时会重新校验版次、时间戳、双语卡片、分数边界和来源 URL。Atlas 私人知识节点也会校验结论、Truth Score、证据数组、推理 trace 与人工落位坐标，损坏记录不会被重新渲染。
 
 快照并不绕过推理。它保存的是某次已经完成的真实 Gonka 排序结果，包括：
 
@@ -679,6 +684,7 @@ npm audit --audit-level=low
 │   ├── signal-skills.mjs           # 日期窗口、规范化、去重等 Skills
 │   ├── signal-object-cache.mjs      # OSS 三日公开版次读取与完整回执校验
 │   ├── signal-snapshot.mjs         # 可复现日期快照
+│   ├── rate-limit.mjs              # Node / Sites 共用的推理限流与内存上限
 │   ├── geocode.mjs                 # Nominatim 地点候选
 │   └── *.test.mjs                  # 核心服务测试
 ├── worker/                         # Edge-hosting API 入口与测试
