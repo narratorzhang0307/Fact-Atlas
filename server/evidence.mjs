@@ -14,6 +14,21 @@ function textFromTag(block, tag) {
   return decodeEntities(match?.[1] ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function imageFromItem(item) {
+  const raw = item.match(/<media:content[^>]+url=["']([^"']+)["'][^>]*>/i)?.[1]
+    || item.match(/<media:thumbnail[^>]+url=["']([^"']+)["'][^>]*>/i)?.[1]
+    || item.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image\//i)?.[1]
+    || item.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)?.[1]
+    || "";
+  const decoded = decodeEntities(raw).trim();
+  try {
+    const url = new URL(decoded);
+    return new Set(["http:", "https:"]).has(url.protocol) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function parseGoogleNewsRss(xml, limit = 6) {
   const items = String(xml).match(/<item>[\s\S]*?<\/item>/gi) ?? [];
   return items.slice(0, limit).map((item, index) => {
@@ -28,6 +43,7 @@ export function parseGoogleNewsRss(xml, limit = 6) {
       publisherUrl,
       publishedAt: textFromTag(item, "pubDate") || null,
       snippet: textFromTag(item, "description") || textFromTag(item, "title"),
+      imageUrl: imageFromItem(item),
       origin: "Google News RSS",
     };
   }).filter((item) => item.url);
@@ -52,6 +68,7 @@ export function parseBingNewsRss(xml, limit = 6) {
       publisherUrl: "https://www.bing.com/news",
       publishedAt: textFromTag(item, "pubDate") || null,
       snippet: textFromTag(item, "description") || textFromTag(item, "title"),
+      imageUrl: imageFromItem(item),
       origin: "Bing News RSS",
     };
   }).filter((item) => item.url);

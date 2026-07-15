@@ -38,6 +38,24 @@ export const SIGNAL_TOPICS = {
     agent: "Science Scout · 科学侦察员",
     query: "science space medicine physics research discovery",
   },
+  health: {
+    label: "Health & Bio",
+    labelZh: "健康与生命",
+    agent: "Life Science Scout · 生命科学侦察员",
+    query: "global health medicine biotechnology public health research",
+  },
+  culture: {
+    label: "Cities & Culture",
+    labelZh: "城市与文化",
+    agent: "Culture Cartographer · 文化地图师",
+    query: "global cities culture archaeology heritage architecture design",
+  },
+  policy: {
+    label: "Policy & Society",
+    labelZh: "政策与社会",
+    agent: "Public Interest Scout · 公共利益侦察员",
+    query: "global public policy regulation society institutions public interest",
+  },
 };
 
 const DAILY_CACHE = new Map();
@@ -48,7 +66,7 @@ function text(value, max = 800) {
 
 export function normalizeSignalRanking(raw, sources) {
   const seen = new Set();
-  const signals = Array.isArray(raw?.signals) ? raw.signals.flatMap((item) => {
+  const signals = Array.isArray(raw?.signals) ? raw.signals.flatMap((item, rankIndex) => {
     const sourceIndex = Number(item?.sourceIndex);
     if (!Number.isInteger(sourceIndex) || sourceIndex < 1 || sourceIndex > sources.length || seen.has(sourceIndex)) return [];
     const source = sources[sourceIndex - 1];
@@ -58,7 +76,9 @@ export function normalizeSignalRanking(raw, sources) {
     return [{
       id: `signal-${sourceIndex}`,
       sourceIndex,
-      importance: Math.max(0, Math.min(100, Math.round(Number(item?.importance) || 0))),
+      importance: Number(item?.importance) >= 10
+        ? Math.max(10, Math.min(100, Math.round(Number(item.importance))))
+        : Math.max(50, 92 - rankIndex * 8),
       headline: text(item?.headline, 300) || source.title,
       headlineZh: text(item?.headlineZh, 300),
       claim,
@@ -72,6 +92,7 @@ export function normalizeSignalRanking(raw, sources) {
         publisher: source.publisher,
         publishedAt: source.publishedAt,
         origin: source.origin,
+        imageUrl: source.imageUrl || null,
       },
     }];
   }).slice(0, 5) : [];
@@ -99,7 +120,7 @@ function rankingMessages(topic, sources) {
     },
     {
       role: "user",
-      content: `TOPIC: ${topic.label} / ${topic.labelZh}\nUNTRUSTED NEWS PACKET:\n${JSON.stringify(packet, null, 2)}\n\nSelect up to five diverse, consequential items. Prefer independent publishers, recency, public impact, and claims that can be checked. Avoid duplicate stories and sensationalism. For each item, turn the headline into one self-contained factual claim for later verification. Return exactly {"brief":"English daily brief","briefZh":"Chinese daily brief","signals":[{"sourceIndex":1,"importance":0,"headline":"concise English headline","headlineZh":"concise Chinese headline","claim":"one checkable English claim","claimZh":"same claim in Chinese","why":"why it matters, without asserting it is true","whyZh":"Chinese explanation","locationHint":"place name only when explicitly supported; otherwise empty"}]}.`,
+      content: `TOPIC: ${topic.label} / ${topic.labelZh}\nUNTRUSTED NEWS PACKET:\n${JSON.stringify(packet, null, 2)}\n\nSelect up to five diverse, consequential items and order them from most to least important. Prefer independent publishers, recency, public impact, and claims that can be checked. Avoid duplicate stories and sensationalism. For each item, turn the headline into one self-contained factual claim for later verification. "importance" must be an integer score from 50 to 100 (for example 82), never an ordinal rank. Return exactly {"brief":"English daily brief","briefZh":"Chinese daily brief","signals":[{"sourceIndex":1,"importance":82,"headline":"concise English headline","headlineZh":"concise Chinese headline","claim":"one checkable English claim","claimZh":"same claim in Chinese","why":"why it matters, without asserting it is true","whyZh":"Chinese explanation","locationHint":"place name only when explicitly supported; otherwise empty"}]}.`,
     },
   ];
 }

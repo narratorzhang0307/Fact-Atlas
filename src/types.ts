@@ -86,7 +86,7 @@ export interface ApiError {
   };
 }
 
-export type SignalTopic = "ai" | "technology" | "finance" | "climate" | "science";
+export type SignalTopic = "ai" | "technology" | "finance" | "climate" | "science" | "health" | "culture" | "policy";
 
 export interface DailySignal {
   id: string;
@@ -105,6 +105,7 @@ export interface DailySignal {
     publisher: string;
     publishedAt: string | null;
     origin: string;
+    imageUrl: string | null;
   };
 }
 

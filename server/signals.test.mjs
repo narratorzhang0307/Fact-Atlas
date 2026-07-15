@@ -8,7 +8,7 @@ const SOURCES = [
 
 describe("signal scout", () => {
   it("exposes bounded public-interest topic agents", () => {
-    expect(Object.keys(SIGNAL_TOPICS)).toEqual(["ai", "technology", "finance", "climate", "science"]);
+    expect(Object.keys(SIGNAL_TOPICS)).toEqual(["ai", "technology", "finance", "climate", "science", "health", "culture", "policy"]);
   });
 
   it("rejects invented and duplicate source indexes", () => {
@@ -20,6 +20,14 @@ describe("signal scout", () => {
     expect(result.signals).toHaveLength(1);
     expect(result.signals[0].importance).toBe(100);
     expect(result.signals[0].source.url).toBe("https://example.com/a");
+  });
+
+  it("falls back to ranked priority when a model returns an ordinal instead of a score", () => {
+    const result = normalizeSignalRanking({ signals: [
+      { sourceIndex: 1, importance: 1, claim: "A checkable claim about Alpha" },
+      { sourceIndex: 2, importance: 2, claim: "A checkable claim about Beta" },
+    ] }, SOURCES);
+    expect(result.signals.map((signal) => signal.importance)).toEqual([92, 84]);
   });
 
   it("keeps Gonka receipt provenance on a live ranking", async () => {

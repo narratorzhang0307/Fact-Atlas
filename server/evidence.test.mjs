@@ -11,18 +11,19 @@ import {
 
 describe("evidence parsing", () => {
   it("parses Google News RSS into bounded sources", () => {
-    const xml = `<rss><channel><item><title><![CDATA[Claim checked - Publisher]]></title><link>https://news.google.com/a</link><pubDate>Tue, 14 Jul 2026 10:00:00 GMT</pubDate><description>Evidence summary</description><source url="https://publisher.example">Publisher</source></item></channel></rss>`;
+    const xml = `<rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item><title><![CDATA[Claim checked - Publisher]]></title><link>https://news.google.com/a</link><pubDate>Tue, 14 Jul 2026 10:00:00 GMT</pubDate><description>Evidence summary</description><media:thumbnail url="https://images.example/news.jpg"/><source url="https://publisher.example">Publisher</source></item></channel></rss>`;
     const sources = parseGoogleNewsRss(xml);
     expect(sources).toHaveLength(1);
-    expect(sources[0]).toMatchObject({ publisher: "Publisher", title: "Claim checked - Publisher" });
+    expect(sources[0]).toMatchObject({ publisher: "Publisher", title: "Claim checked - Publisher", imageUrl: "https://images.example/news.jpg" });
   });
 
   it("parses Bing News RSS and preserves its named publisher", () => {
-    const xml = `<rss xmlns:News="https://www.bing.com/news"><channel><item><title>Claim checked</title><link>https://www.bing.com/news/click</link><pubDate>Tue, 14 Jul 2026 10:00:00 GMT</pubDate><description>Evidence summary</description><News:Source>Example News</News:Source></item></channel></rss>`;
+    const xml = `<rss xmlns:News="https://www.bing.com/news"><channel><item><title>Claim checked</title><link>https://www.bing.com/news/click</link><pubDate>Tue, 14 Jul 2026 10:00:00 GMT</pubDate><description><![CDATA[<img src="https://images.example/bing.jpg">Evidence summary]]></description><News:Source>Example News</News:Source></item></channel></rss>`;
     expect(parseBingNewsRss(xml)).toMatchObject([{
       publisher: "Example News",
       origin: "Bing News RSS",
       title: "Claim checked",
+      imageUrl: "https://images.example/bing.jpg",
     }]);
   });
 

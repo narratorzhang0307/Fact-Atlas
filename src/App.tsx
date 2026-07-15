@@ -1,8 +1,9 @@
-import { Archive, ChevronLeft, ChevronRight, FileSearch, Gavel, Github, Globe2, Radio } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, FileSearch, Gavel, Github, Globe2, Radio, RadioTower } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ClaimComposer } from "./components/ClaimComposer";
 import { ResultView } from "./components/ResultView";
 import { FactAtlas } from "./components/FactAtlas";
+import { SignalDesk } from "./components/SignalDesk";
 import { EvidenceCouncil } from "./components/EvidenceCouncil";
 import type { ApiError, HealthStatus, InputKind, VerificationResult } from "./types";
 
@@ -45,7 +46,7 @@ const HERO_BLOCKS = [
   },
 ] as const;
 
-type ProductView = "relay" | "atlas" | "council";
+type ProductView = "relay" | "atlas" | "signals";
 
 export default function App() {
   const [kind, setKind] = useState<InputKind>("text");
@@ -58,6 +59,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [heroBlockIndex, setHeroBlockIndex] = useState(1);
   const [activeView, setActiveView] = useState<ProductView>("relay");
+  const [relayPane, setRelayPane] = useState<"verify" | "council">("verify");
   const heroTouchStartX = useRef<number | null>(null);
   const heroBlock = HERO_BLOCKS[heroBlockIndex];
 
@@ -105,14 +107,14 @@ export default function App() {
     <div className="app-shell">
       <div className="product-frame">
         <header className="site-header">
-          <a className="brand" href="#top" aria-label="Fact Atlas home" onClick={() => setActiveView("relay")}>
+          <a className="brand" href="#top" aria-label="Fact Atlas home" onClick={() => { setRelayPane("verify"); setActiveView("relay"); }}>
             <span className="brand-mark"><Globe2 size={19} /></span>
             <span className="brand-copy"><strong>Fact Atlas</strong><small>知识星球 · powered by FactRelay</small></span>
           </a>
           <nav className="product-nav" aria-label="Product views · 产品视图">
-            <button type="button" className={activeView === "relay" ? "active" : ""} onClick={() => setActiveView("relay")}><FileSearch size={14} /><span>Relay<small>核验</small></span></button>
+            <button type="button" className={activeView === "relay" ? "active" : ""} onClick={() => { setRelayPane("verify"); setActiveView("relay"); }}><FileSearch size={14} /><span>Relay<small>探索</small></span></button>
             <button type="button" className={activeView === "atlas" ? "active" : ""} onClick={() => setActiveView("atlas")}><Globe2 size={14} /><span>Atlas<small>星图</small></span></button>
-            <button type="button" className={activeView === "council" ? "active" : ""} onClick={() => setActiveView("council")}><Gavel size={14} /><span>Council<small>法庭</small></span></button>
+            <button type="button" className={activeView === "signals" ? "active" : ""} onClick={() => setActiveView("signals")}><RadioTower size={14} /><span>Signals<small>发现</small></span></button>
           </nav>
           <div className="header-meta">
             <span className="header-status" aria-label="Network status"><i className={health?.liveReady ? "pulse-dot connected" : "pulse-dot"} />{health?.liveReady ? "Gonka live · 已连接" : "Preview · 预览"}</span>
@@ -124,6 +126,11 @@ export default function App() {
 
         <main id="top" className={`view-${activeView}`}>
           {activeView === "relay" && <>
+          <nav className="relay-pane-tabs" aria-label="FactRelay views · FactRelay 视图">
+            <button type="button" className={relayPane === "verify" ? "active" : ""} onClick={() => setRelayPane("verify")}><FileSearch size={16} /><span>Verification<small>事实核验</small></span></button>
+            <button type="button" className={relayPane === "council" ? "active" : ""} onClick={() => setRelayPane("council")}><Gavel size={16} /><span>Evidence Council<small>多方审理</small></span></button>
+          </nav>
+          {relayPane === "verify" ? <>
           <section className="hero">
             <div className="hero-copy">
               <span className="hero-eyebrow"><Radio size={14} /> FactRelay engine on Gonka · Gonka 事实中继</span>
@@ -258,11 +265,12 @@ export default function App() {
                 <ResultView result={result} />
                 <div className="result-next-actions">
                   <button type="button" onClick={() => setActiveView("atlas")}><Archive size={16} /><span>Place in Fact Atlas<small>写入知识星球</small></span></button>
-                  <button type="button" onClick={() => setActiveView("council")}><Gavel size={16} /><span>Open Evidence Council<small>查看证据法庭</small></span></button>
+                  <button type="button" onClick={() => setRelayPane("council")}><Gavel size={16} /><span>Open Evidence Council<small>进入多方审理</small></span></button>
                 </div>
               </>}
             </div>
           </section>
+          </> : <EvidenceCouncil result={result} onGoRelay={() => setRelayPane("verify")} onGoAtlas={() => setActiveView("atlas")} />}
           </>}
 
           {activeView === "atlas" && <FactAtlas
@@ -273,17 +281,28 @@ export default function App() {
               window.setTimeout(() => document.querySelector("[data-testid='result-view']")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
             }}
           />}
-          {activeView === "council" && <EvidenceCouncil result={result} onGoRelay={() => setActiveView("relay")} onGoAtlas={() => setActiveView("atlas")} />}
+          {activeView === "signals" && <SignalDesk
+            onInvestigate={(signal) => {
+              setKind("text");
+              setContent(signal.claim);
+              setImageDataUrl("");
+              setImageName("");
+              setError("");
+              setRelayPane("verify");
+              setActiveView("relay");
+              window.setTimeout(() => document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+            }}
+          />}
         </main>
 
         <nav className="mobile-tabbar" aria-label="Mobile product tabs · 手机端产品标签">
-          <button type="button" className={activeView === "relay" ? "active" : ""} onClick={() => setActiveView("relay")}><FileSearch size={20} /><span>Relay<small>核验</small></span></button>
+          <button type="button" className={activeView === "relay" ? "active" : ""} onClick={() => { setRelayPane("verify"); setActiveView("relay"); }}><FileSearch size={20} /><span>Relay<small>探索</small></span></button>
           <button type="button" className={activeView === "atlas" ? "active" : ""} onClick={() => setActiveView("atlas")}><Globe2 size={22} /><span>Atlas<small>星图</small></span></button>
-          <button type="button" className={activeView === "council" ? "active" : ""} onClick={() => setActiveView("council")}><Gavel size={20} /><span>Council<small>法庭</small></span></button>
+          <button type="button" className={activeView === "signals" ? "active" : ""} onClick={() => setActiveView("signals")}><RadioTower size={20} /><span>Signals<small>发现</small></span></button>
         </nav>
 
         <footer>
-          <span>Fact Atlas · Knowledge planet powered by FactRelay · 知识星球</span>
+          <span>Fact Atlas · Relay → Atlas ← Signals · 两种知识路径，一个私人星球</span>
           <span>AI inference exclusively through GonkaRouter · AI 推理仅通过 GonkaRouter</span>
         </footer>
       </div>
