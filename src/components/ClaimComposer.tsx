@@ -8,6 +8,17 @@ const MODES: Array<{ id: InputKind; label: string; icon: typeof Type }> = [
   { id: "image", label: "Image 图片", icon: FileImage },
 ];
 
+const ACCEPTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value.trim());
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 const SAMPLES = [
   {
     claim: "The Great Wall of China is visible from the Moon with the naked eye.",
@@ -52,12 +63,14 @@ export function ClaimComposer({
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState("");
-  const canSubmit = kind === "image" ? Boolean(imageDataUrl) : content.trim().length >= 8;
+  const trimmedContent = content.trim();
+  const urlIsValid = kind !== "url" || isHttpUrl(trimmedContent);
+  const canSubmit = kind === "image" ? Boolean(imageDataUrl) : trimmedContent.length >= 8 && urlIsValid;
 
   const loadFile = (file?: File) => {
     if (!file) return;
     setFileError("");
-    if (!new Set(["image/png", "image/jpeg", "image/webp"]).has(file.type)) {
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
       setFileError("Use a PNG, JPEG, or WebP image. · 请使用 PNG、JPEG 或 WebP 图片。");
       return;
     }
@@ -67,6 +80,7 @@ export function ClaimComposer({
     }
     const reader = new FileReader();
     reader.onload = () => onImageChange(String(reader.result), file.name);
+    reader.onerror = () => setFileError("The image could not be read. · 图片读取失败，请重新选择。");
     reader.readAsDataURL(file);
   };
 
@@ -118,6 +132,7 @@ export function ClaimComposer({
             placeholder="https://example.com/article"
           />
           <small>We extract the central claim and retrieve fresh related coverage. · 系统会提取核心主张并检索最新相关报道。</small>
+          {content && !urlIsValid ? <span className="field-error" role="alert">Enter a complete HTTP or HTTPS link. · 请输入完整的 HTTP 或 HTTPS 公开链接。</span> : null}
         </label>
       )}
 
