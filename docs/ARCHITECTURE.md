@@ -228,7 +228,7 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 - Nominatim returns deterministic place candidates; it does not decide which location is correct.
 - The user must click one candidate before coordinates are stored.
 - A claim may be saved without coordinates and remains visibly unplaced.
-- The browser stores the complete result snapshot locally; the hackathon build does not upload a private Atlas history.
+- The browser stores the complete result snapshot locally; the server does not upload a private Atlas history.
 - Mapbox renders the dark basemap, bright verdict markers, and deterministic explainable links. It is a visualization layer, not an inference provider.
 
 ### PWA shell
@@ -267,7 +267,7 @@ This layer does not call Gemini, OpenAI, local models, or any other inference pr
 
 ## Deliberate non-features
 
-- No user accounts or history database in the hackathon build.
+- No user accounts or server-side history database.
 - No blockchain write, token, or wallet. Gonka is the decentralized inference substrate; unrelated on-chain theater would not strengthen factual accuracy.
 - No hidden fallback to another AI provider.
 - No model-generated numeric score used as the final Truth Score.

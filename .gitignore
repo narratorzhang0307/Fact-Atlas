@@ -14,8 +14,10 @@ __pycache__/
 区块链书籍/
 创业坟场参考案例/
 黄佳老师的书/
-FactRelay_黑客松交付包/
-FactAtlas_黑客松交付包/
+*交付包/
+artifacts/
+*.zip
+*.sha256
 *.pdf
 *.mp4
 *.mp3
