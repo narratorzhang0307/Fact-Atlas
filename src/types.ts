@@ -85,3 +85,40 @@ export interface ApiError {
     details?: string;
   };
 }
+
+export type SignalTopic = "ai" | "technology" | "finance" | "climate" | "science";
+
+export interface DailySignal {
+  id: string;
+  sourceIndex: number;
+  importance: number;
+  headline: string;
+  headlineZh: string;
+  claim: string;
+  claimZh: string;
+  why: string;
+  whyZh: string;
+  locationHint: string;
+  source: {
+    title: string;
+    url: string;
+    publisher: string;
+    publishedAt: string | null;
+    origin: string;
+  };
+}
+
+export interface DailySignalBrief {
+  mode: "live";
+  generatedAt: string;
+  topic: SignalTopic;
+  topicLabel: string;
+  topicLabelZh: string;
+  agent: string;
+  model: string;
+  requestId: string | null;
+  cacheHit: boolean;
+  brief: string;
+  briefZh: string;
+  signals: DailySignal[];
+}

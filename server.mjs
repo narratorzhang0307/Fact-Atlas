@@ -13,6 +13,7 @@ import {
 } from "./server/gonka.mjs";
 import { verifyClaim } from "./server/verify.mjs";
 import { geocodePlace } from "./server/geocode.mjs";
+import { getDailySignals } from "./server/signals.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST = resolve(ROOT, "dist");
@@ -117,6 +118,10 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "GET" && url.pathname === "/api/geocode") {
       sendJson(response, 200, { candidates: await geocodePlace(url.searchParams.get("q")) });
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/signals") {
+      sendJson(response, 200, await getDailySignals(url.searchParams.get("topic") || "ai", process.env));
       return;
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {

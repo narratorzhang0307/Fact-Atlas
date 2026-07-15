@@ -7,6 +7,7 @@ import {
 } from "../server/gonka.mjs";
 import { verifyClaim } from "../server/verify.mjs";
 import { geocodePlace } from "../server/geocode.mjs";
+import { getDailySignals } from "../server/signals.mjs";
 
 const MAX_BODY_BYTES = 7_500_000;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -85,6 +86,10 @@ const worker = {
       if (request.method === "GET" && url.pathname === "/api/demo") return json(DEMO_RESULT);
       if (request.method === "GET" && url.pathname === "/api/geocode") {
         return json({ candidates: await geocodePlace(url.searchParams.get("q")) });
+      }
+      if (request.method === "GET" && url.pathname === "/api/signals") {
+        enforceRateLimit(request);
+        return json(await getDailySignals(url.searchParams.get("topic") || "ai", env));
       }
       if (request.method === "POST" && url.pathname === "/api/verify") {
         enforceRateLimit(request);
