@@ -12,6 +12,7 @@ import {
   GonkaError,
 } from "./server/gonka.mjs";
 import { verifyClaim } from "./server/verify.mjs";
+import { geocodePlace } from "./server/geocode.mjs";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const DIST = resolve(ROOT, "dist");
@@ -112,6 +113,10 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "GET" && url.pathname === "/api/demo") {
       sendJson(response, 200, DEMO_RESULT);
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/api/geocode") {
+      sendJson(response, 200, { candidates: await geocodePlace(url.searchParams.get("q")) });
       return;
     }
     if (request.method === "POST" && url.pathname === "/api/verify") {
