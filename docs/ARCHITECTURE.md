@@ -17,8 +17,10 @@ That produces four non-negotiable rules:
 flowchart TB
     subgraph Browser[Browser]
         Relay[Relay verification + Evidence Council]
-        Atlas[Private browser-local Fact Atlas + Mapbox GL]
+        Atlas[Private / Public Fact Atlas + Mapbox GL]
         Signals[Topic Signal Agents]
+        Commit[Claim identity + record commitments + daily Merkle editions]
+        Wallet[User wallet signer for public editions]
     end
 
     subgraph Server[FactRelay Node server]
@@ -40,6 +42,10 @@ flowchart TB
         M2[MiniMaxAI/MiniMax-M2.7]
     end
 
+    subgraph EVM[Public integrity layer]
+        Chronicle[FactAtlasChronicle contract]
+    end
+
     Relay --> Guard
     Guard --> Extract
     Guard --> Retrieve
@@ -55,6 +61,9 @@ flowchart TB
     Score --> Report
     Report --> Relay
     Relay --> Atlas
+    Atlas --> Commit
+    Commit --> Wallet
+    Wallet --> Chronicle
     Signals --> Retrieve
     Retrieve --> Rank
     Rank --> K2
@@ -63,6 +72,29 @@ flowchart TB
     Atlas --> Geocode
     Atlas --> MapConfig
 ```
+
+## Public knowledge Chronicle
+
+Atlas has two explicit visibility modes:
+
+- **Private Atlas:** the complete verification snapshot remains in browser storage and never requires a wallet.
+- **Public Chronicle:** a live verification receives a user-confirmed canonical claim, compact cryptographic commitments, and membership in a Daily Edition.
+
+The public path is deliberately hybrid. The application performs retrieval, inference, scoring, hashing, proof generation, export, and map rendering off-chain. [`FactAtlasChronicle.sol`](../contracts/FactAtlasChronicle.sol) stores only the daily edition root, previous root, manifest hash, policy root, fact count, publisher, revision, and block time.
+
+```mermaid
+flowchart LR
+    Live[Live verification] --> Human{Human publish choice}
+    Human -->|Private| Local[Browser-local snapshot]
+    Human -->|Public| Canon[Canonical claim]
+    Canon --> Record[ClaimKey + snapshot + evidence + receipt + policy hashes]
+    Record --> Merkle[Daily Merkle Edition]
+    Merkle --> Export[Portable proof bundle]
+    Merkle --> Sign[Wallet signature]
+    Sign --> Contract[Chronicle contract]
+```
+
+The Chronicle proves publisher identity, content integrity, inclusion, and revision order. It does not prove that a claim is true. That judgment remains attached to inspectable evidence, deterministic score inputs, disagreement, and future corrections. See [`KNOWLEDGE_CHAIN.md`](KNOWLEDGE_CHAIN.md) for the protocol.
 
 ## Request sequence
 
@@ -249,7 +281,17 @@ Node self-hosting and the Sites Worker share `server/runtime-contract.mjs`. Publ
 - Signals editions expire after 72 hours and are capped at 24 topic/date records.
 - Cache timestamps, topic/date identity, bilingual fields, score ranges, and source URL schemes are checked on every read.
 - Atlas records must contain a matching node/result ID, valid verdict and score bounds, evidence arrays, trace arrays, and either a user-confirmed valid coordinate or an explicit unplaced state.
+- Legacy Atlas records are migrated to `private`; an upgrade never infers public visibility.
+- Public records require a live verification, a user-confirmed canonical claim, and validated 32-byte commitment fields.
 - Corrupt local records are ignored; the application does not reinterpret or upload them.
+
+### Public Chronicle contract
+
+- Each wallet address owns an independent append-only chain head.
+- A new edition must reference the current `editionRoot`; stale or reordered writes revert.
+- The same day may receive additional revisions; historical versions remain queryable.
+- No administrator, Token, staking rule, oracle verdict, or private content exists in the contract.
+- An unconfigured contract address leaves proof generation available and chain publication visibly disabled; the UI never fabricates a transaction.
 
 ### Atlas placement and mapping
 

@@ -18,6 +18,8 @@
   ·
   <a href="docs/FACT_ATLAS.md">知识星球模型</a>
   ·
+  <a href="docs/KNOWLEDGE_CHAIN.md">DApp / 每日知识链</a>
+  ·
   <a href="docs/SIGNALS.md">Signals 版次</a>
 </p>
 
@@ -25,20 +27,20 @@
 
 ## 一句话定位
 
-**Fact Atlas 首先是一款个人知识库产品。** 它不只保存“我看过什么”，还保存“这条信息为什么可信、哪些证据反对它、AI 在哪一步参与、最终由谁决定入库”。
+**Fact Atlas 是一款可验证个人知识库，也是一款轻量混合式知识 DApp。** 它同时保存“我看过什么”“这条信息为什么可信”“哪些证据反对它”“AI 在哪一步参与”“谁确认入库”，以及公开版本有没有被静默篡改。
 
 Fact Atlas 把个人知识形成过程拆成三层：
 
 - **Relay · 探索与核验层**：接收文字、公开链接或截图，建立公开来源账本，运行调查方与质疑方，生成确定性 Truth Score；
-- **Atlas · 私人知识地图层**：把完整核验快照保存为浏览器本地事实节点，由用户确认是否入库、是否落位以及落在哪里；
+- **Atlas · 私人与公共知识层**：私人节点和完整证据只保存在当前浏览器；用户明确公开的节点形成每日 Merkle Edition，可由钱包签名后把紧凑根值写入智能合约；
 - **Signals · 每日发现层**：由一个主 Agent 编排八个主题子 Agent，按日期从全球公开信息中发现值得关注、但仍待核验的候选知识。
 
 知识可以由用户主动提交，也可以由 Signals 每日发现；两条路径最终都必须经过 FactRelay 的证据核验和人工确认，才能进入 Atlas。
 
-> **Build a knowledge world. Every fact keeps receipts.**
-> 构建你的知识世界，让每条事实都保留回执。
+> **Build a knowledge world. Every fact keeps evidence, receipts, and revision history.**
+> 构建你的知识世界，让每条事实都保留证据、回执与修订历史。
 
-## 评委 60 秒速览
+## 60 秒技术速览
 
 | 评审问题 | Fact Atlas 的回答 | 可检查位置 |
 | --- | --- | --- |
@@ -51,6 +53,9 @@ Fact Atlas 把个人知识形成过程拆成三层：
 | 如何保护公开推理配额？ | Node 正式站与 Sites Worker 共用有内存上限的固定窗口限流；OSS/快照命中不消耗实时推理额度 | [`server/rate-limit.mjs`](server/rate-limit.mjs) |
 | Request ID 证明什么？ | 只证明哪一次 Gonka 请求生成了分析，不被宣称为事实真实性证明 | API 返回的 `trace` 与 `models[].requestId` |
 | 私人知识存在哪里？ | 完整 Atlas 快照只保存在当前浏览器，不上传私人历史数据库 | [`src/atlas.ts`](src/atlas.ts) |
+| DApp 的核心是什么？ | 用户明确公开的事实按天形成 Merkle Edition；合约只保存版本根、前序根、清单哈希、评分策略根和数量 | [`docs/KNOWLEDGE_CHAIN.md`](docs/KNOWLEDGE_CHAIN.md) |
+| 上链是否代表“事实为真”？ | 不代表。链上承诺证明某个发布者在某个时间发布了哪一版内容、内容后来有没有变化；事实强度仍由公开证据决定 | [`contracts/FactAtlasChronicle.sol`](contracts/FactAtlasChronicle.sol) |
+| 是否发行 Token？ | 不发行。钱包仅作为公开版本的身份与签名器；私人 Atlas 无需钱包 | [`src/chronicle-chain.ts`](src/chronicle-chain.ts) |
 | 地点由谁决定？ | Nominatim 只给候选，必须由用户点击确认；无法可靠定位的内容留在“未落位轨道” | [`src/components/FactAtlas.tsx`](src/components/FactAtlas.tsx) |
 | 手机能否使用？ | 是。项目是可安装 PWA；界面外壳可离线打开，但所有 `/api/*` 始终 network-only | [`docs/PWA.md`](docs/PWA.md) |
 
@@ -88,7 +93,7 @@ Signals 按“日期 + 主题”组织全球公开信息。它只回答“什么
 | Tab | 产品角色 | 输入 | 输出 | 明确不做什么 |
 | --- | --- | --- | --- | --- |
 | **Relay · 探索** | 主动提交与事实核验入口 | 文字、公开 URL、截图，或 Signals 候选 | 来源账本、双模型判断、Truth Score、缺失证据、执行轨迹 | 不自动写入 Atlas，不把模型回复当最终分数 |
-| **Atlas · 星图** | 私人知识库与空间组织中心 | 用户确认保存的完整核验快照 | 可追溯事实节点、未落位轨道、可解释关系 | 不伪造坐标，不把地图距离当作事实关系 |
+| **Atlas · 星图** | 私人知识库、公共知识链与空间组织中心 | 用户确认保存的完整核验快照 | 私人节点、公共 Daily Edition、未落位轨道、可解释关系 | 不误公开私人数据，不伪造坐标，不把链上时间戳当作事实证据 |
 | **Signals · 发现** | 每日主题知识发现入口 | 日期与八个主题之一 | 一次一张的双语候选卡、原始来源和 Gonka 排序回执 | 重要性不是 Truth Score，不绕过 Relay 直接入库 |
 
 ```mermaid
@@ -100,10 +105,48 @@ flowchart LR
     R --> E["Evidence Council<br/>调查 · 质疑 · 确定性裁决"]
     E --> O["Truth Score<br/>来源账本 · 分歧 · Gonka 回执"]
     O --> H2{"用户确认入库?"}
-    H2 -->|是| A["Atlas<br/>私人知识地图"]
+    H2 -->|私人| A["Private Atlas<br/>设备内完整知识快照"]
+    H2 -->|公开| C["Public Chronicle<br/>每日 Merkle Edition"]
     H2 -->|否| R
     A --> P["确认地点 / 未落位轨道<br/>可解释知识关系"]
+    C --> W["用户钱包签名<br/>无 Token"]
+    W --> SC["Chronicle 合约<br/>版本根 + 前序根 + 策略根"]
 ```
+
+## 核心 DApp：公开知识的每日版本链
+
+Fact Atlas 采用混合架构。网页抓取、截图、完整证据、模型推理、地图和私人知识库都留在链下；只有公开知识版本的紧凑密码学承诺进入链上。这样既保留证据完整性和修订顺序，又避免把大文件、隐私数据和昂贵推理塞进智能合约。
+
+### 一天一个 Edition，不是一条新闻一个交易
+
+用户明确公开的事实按 UTC 日期聚合。每个 Daily Edition 包含：
+
+| 字段 | 作用 |
+| --- | --- |
+| `factsRoot` | 当日全部公开事实 `recordHash` 的 Merkle Root |
+| `manifestHash` | 当日事实清单、规范主张、结论和分数的稳定哈希 |
+| `policyRoot` | 当日使用过的确定性评分规则版本根 |
+| `previousEditionRoot` | 链接该发布者的上一版，形成追加式知识链 |
+| `editionRoot` | 上述字段的最终版本承诺 |
+
+同一天允许产生修订版，但新版本必须指向当前链头。旧版不会被删除，界面按时间和 revision 呈现演化历史。
+
+### 三层哈希解决“一个字不同”与“事实相同”
+
+1. **ClaimKey**：对用户确认的规范主张做 NFKC、大小写、标点与空格规范化，用于识别格式不同但语义陈述一致的事实身份；
+2. **Raw Snapshot Hash**：对完整核验快照做精确承诺，证据、分数、回执或时间变化都会产生新值；
+3. **Edition Root**：把当天全部记录组织成 Merkle Root，并链接前一版本。
+
+系统不会自动断言两句改写后的自然语言语义相同。语义等价需要用户确认同一条 canonical claim，避免模型偷偷合并两个不同事实。
+
+### 钱包的角色
+
+- 钱包是公开版本的身份与签名器；
+- 私人 Atlas 不连接钱包、不上链；
+- 项目不发行 Token，也不把 Truth Score 变成可交易资产；
+- 当前代码支持标准 EVM 注入式钱包；产品化阶段可接入账户抽象与 Gas 代付，把交互呈现为“签名并发布版本”。
+
+完整协议、验证方式和威胁边界见 [`docs/KNOWLEDGE_CHAIN.md`](docs/KNOWLEDGE_CHAIN.md)。
 
 ## 系统架构
 
@@ -117,6 +160,8 @@ flowchart TB
         AtlasUI["Atlas<br/>浏览器本地事实节点"]
         SignalsUI["Signals<br/>日期与主题卡片"]
         PWA["PWA Shell<br/>静态外壳缓存"]
+        Commit["Knowledge Committer<br/>ClaimKey / Snapshot / Merkle Edition"]
+        Wallet["Wallet Signer<br/>仅公开版本"]
     end
 
     subgraph Server["Node.js Server · 可审计编排层"]
@@ -135,6 +180,10 @@ flowchart TB
         MiniMax["MiniMax-M2.7<br/>Skeptic"]
     end
 
+    subgraph EVM["EVM · 公开完整性层"]
+        Chronicle["FactAtlasChronicle<br/>editionRoot / previousRoot / policyRoot"]
+    end
+
     RelayUI --> Guard --> Extract
     Guard --> Retrieve
     Extract --> Kimi
@@ -148,6 +197,8 @@ flowchart TB
     SignalsUI --> SignalEngine --> Retrieve
     SignalEngine --> Kimi --> SignalsUI
     AtlasUI --> Geo
+    AtlasUI --> Commit
+    Commit --> Wallet --> Chronicle
     PWA -. "不缓存 /api/*" .-> Server
 ```
 
@@ -162,6 +213,8 @@ flowchart TB
 | 公共检索 | 公开 HTML、Google News RSS、Bing News RSS | 建立可检查的来源账本，不生成语义结论 |
 | 地理候选 | OpenStreetMap Nominatim | 提供候选地点，不替用户决定坐标 |
 | 私人存储 | Browser localStorage | 保存完整事实节点快照与人工决定 |
+| 知识承诺 | Web Crypto SHA-256、Merkle Tree | 生成 ClaimKey、精确快照哈希、证据/回执根和 Daily Edition |
+| DApp 接入 | Solidity、Ethers v6 | 钱包签名并发布公开每日版本；合约不存全文、不发行 Token |
 | 离线外壳 | Web App Manifest、Service Worker | 安装到 iOS/Android；只缓存静态界面资源 |
 | 边缘部署 | Worker entry + Vite worker build | 与自托管 Node 服务器共享核心 API 行为 |
 
@@ -698,7 +751,7 @@ npm audit --audit-level=low
 ├── deploy/online/                  # 隔离 PM2 + Nginx 自托管配置
 ├── scripts/                        # 构建、快照、发布装配和 live demo 工具
 ├── server.mjs                      # Node 服务入口
-└── README.md                       # 评委与开发者的第一入口
+└── README.md                       # 使用者与开发者的第一入口
 ```
 
 ## 更深入的技术文档
